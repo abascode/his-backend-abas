@@ -1,0 +1,9 @@
+.mypy_cache
+.vscode
+.idea
+venv
+__pycache__/
+.DS_Store
+config-local.yaml
+config-production.yaml
+alembic.ini

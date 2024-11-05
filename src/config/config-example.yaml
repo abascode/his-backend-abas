@@ -1,0 +1,16 @@
+app:
+  port: 8000
+  name: his-part-price-backend
+  environment: develop
+
+
+database:
+  part_price:
+    host: "localhost"
+    port: 5432
+    name: "his-part-price-dev"
+    username: "postgres"
+    password: "Zuzok,hPV+1o|]RO"
+
+outbounds:
+  dealer_part_price
