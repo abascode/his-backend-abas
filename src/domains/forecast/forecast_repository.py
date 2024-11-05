@@ -5,6 +5,7 @@ from starlette.requests import Request
 from src.dependencies.database_dependency import get_va_db
 from src.domains.forecast.entities.va_dealer_forecast import DealerForecast
 from src.domains.forecast.forecast_interface import IForecastRepository
+from src.shared.utils.pagination import paginate
 
 
 class ForecastRepository(IForecastRepository):
@@ -41,3 +42,34 @@ class ForecastRepository(IForecastRepository):
                 self.get_va_db(request).delete(data)
             else:
                 data.deletable = 1
+
+    def get_forecast_summary(
+        self, request: Request, forecast_summary_request: ForecastSummaryRequest,
+
+    ) -> DealerForecast:
+        base = (
+            self.get_va_db(request)
+            .query(
+                DealerForecast.month.label("month"),
+                DealerForecast.year.label("year"),
+                DealerForecast.dealer_submit.label("dealer_submit"),
+                DealerForecast.remaining_dealer_submit.label("remaining_dealer_submit"),
+                DealerForecast.order_confirmation.label("order_confirmation"),
+            )
+        )
+
+        res, count = paginate(query, forecast_summary_request.page, forecast_summary_request.size)
+        return (
+            [
+                ForecastSummaryResponse(
+                    month=month,
+                    year=year,
+                    dealer_submit=dealer_submit,
+                    remaining_dealer_submit=remaining_dealer_submit,
+                    order_confirmation=order_confirmation,
+                )
+                for month, year, dealer_submit, remaining_dealer_submit, order_confirmation in res
+            ],
+            count,
+        )
+

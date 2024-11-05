@@ -39,3 +39,10 @@ class UpsertForecastRequest(BaseModel):
     month: int
     year: int
     models: List[UpsertForecastModelRequest]
+    
+class ForecastSummaryRequest(BaseModel):
+    month: int
+    year: int
+    dealer_submit: int
+    remaining_dealer_submit: int
+    order_confirmation: int

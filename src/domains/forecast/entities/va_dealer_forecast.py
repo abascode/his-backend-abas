@@ -32,6 +32,9 @@ class DealerForecast(BaseModel):
     deletable = mapped_column(Integer, server_default=text("0"))
     dealer = relationship(Dealer)
     models = relationship("DealerForecastModel", back_populates="forecast")
+    dealer_submit =mapped_column(Integer, nullable=False)
+    remaining_dealer_submit=mapped_column(Integer, nullable=False)
+    order_confirmation=mapped_column(Integer, server_default=text('0'))
 
 
 @event.listens_for(DealerForecast, "before_insert")
