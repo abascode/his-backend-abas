@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import List
 
-from src.domains.forecast.entities.va_dealer_forecast_model import DealerForecastModel
 from src.domains.master.entities.va_dealer import Dealer
 from src.shared.entities.basemodel import BaseModel
 from sqlalchemy.orm import mapped_column, relationship, MappedColumn
@@ -34,8 +33,8 @@ class DealerForecast(BaseModel):
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
     
     dealer: MappedColumn[Dealer] = relationship(Dealer)
-    models: MappedColumn[List[DealerForecastModel]] = relationship("DealerForecastModel", back_populates="forecast")
-
+    models: MappedColumn[List["DealerForecastModel"]] = relationship("DealerForecastModel", back_populates="forecast")
+    
 
 @event.listens_for(DealerForecast, "before_insert")
 def before_insert(mapper, connection, target: DealerForecast):

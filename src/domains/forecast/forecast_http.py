@@ -5,7 +5,8 @@ from src.domains.forecast.forecast_interface import IForecastUseCase
 from src.domains.forecast.forecast_usecase import ForecastUseCase
 from src.models.requests.forecast_request import UpsertForecastRequest
 from src.models.responses.auth_response import LoginResponse
-from src.models.responses.basic_response import NoDataResponse
+from src.models.responses.basic_response import BasicResponse, NoDataResponse
+from src.models.responses.forecast_response import DealerForecastResponse
 
 router = APIRouter(prefix="/api/forecast", tags=["Forecast"])
 
@@ -23,3 +24,17 @@ def create_forecast(
 ) -> NoDataResponse:
     forecast_uc.upsert_forecast(request, upsert_request)
     return NoDataResponse(message="Success upserting forecast")
+
+@router.get(
+    "/{forecast_id}",
+    response_model=BasicResponse[DealerForecastResponse],
+    summary="Find Forecast",
+    description="Find forecast by id",
+)
+def find_forecast(
+    request: Request,
+    forecast_id: str,
+    forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
+) -> BasicResponse[DealerForecastResponse]:
+    data = forecast_uc.find_forecast(request, forecast_id)
+    return BasicResponse(data=data, message='Success finding forecast')

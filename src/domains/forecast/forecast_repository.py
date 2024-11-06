@@ -4,7 +4,13 @@ from starlette.requests import Request
 
 from src.dependencies.database_dependency import get_va_db
 from src.domains.forecast.entities.va_dealer_forecast import DealerForecast
+from src.domains.forecast.entities.va_dealer_forecast_model import DealerForecastModel
+from src.domains.forecast.entities.va_dealer_forecast_month import DealerForecastMonth
 from src.domains.forecast.forecast_interface import IForecastRepository
+from src.domains.master.entities.va_categories import Category
+from src.domains.master.entities.va_dealer import Dealer
+from src.domains.master.entities.va_model import Model
+from src.domains.master.entities.va_segment import Segment
 
 
 class ForecastRepository(IForecastRepository):
@@ -28,6 +34,12 @@ class ForecastRepository(IForecastRepository):
         return (
             self.get_va_db(request)
             .query(DealerForecast)
+            .join(Dealer, DealerForecast.dealer_id == Dealer.id)
+            .join(DealerForecastModel, DealerForecast.id == DealerForecastModel.dealer_forecast_id)
+            .join(Model, DealerForecastModel.model_id == Model.id)
+            .join(Segment, Model.segment_id == Segment.id)
+            .join(Category, Segment.category_id == Category.id)
+            .join(DealerForecastMonth, DealerForecastModel.id == DealerForecastMonth.dealer_forecast_model_id)
             .filter(DealerForecast.id == forecast_id, DealerForecast.deletable == 0)
             .first()
         )

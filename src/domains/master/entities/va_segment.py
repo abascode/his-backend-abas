@@ -1,6 +1,7 @@
 from datetime import datetime
+from src.domains.master.entities.va_categories import Category
 from src.shared.entities.basemodel import BaseModel
-from sqlalchemy.orm import mapped_column, MappedColumn
+from sqlalchemy.orm import mapped_column, MappedColumn, relationship
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func, text
 
 
@@ -14,3 +15,5 @@ class Segment(BaseModel):
     created_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
+    
+    category: MappedColumn[Category] = relationship(Category)
