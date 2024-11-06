@@ -1,8 +1,10 @@
 from datetime import datetime
+from typing import List
 
+from src.domains.forecast.entities.va_dealer_forecast_model import DealerForecastModel
 from src.domains.master.entities.va_dealer import Dealer
 from src.shared.entities.basemodel import BaseModel
-from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy.orm import mapped_column, relationship, MappedColumn
 from sqlalchemy import DateTime, ForeignKey, String, Integer, func, text, event
 
 from src.shared.utils.xid import generate_xid
@@ -11,27 +13,28 @@ from src.shared.utils.xid import generate_xid
 class DealerForecast(BaseModel):
     __tablename__ = "va_dealer_forecast"
 
-    id = mapped_column(String(255), primary_key=True, nullable=False)
-    month = mapped_column(Integer, nullable=False)
-    year = mapped_column(Integer, nullable=False)
-    dealer_id = mapped_column(String(255), ForeignKey("va_dealers.id"), nullable=False)
-    created_by = mapped_column(
+    id: MappedColumn[str] = mapped_column(String(255), primary_key=True, nullable=False)
+    month: MappedColumn[int] = mapped_column(Integer, nullable=False)
+    year: MappedColumn[int] = mapped_column(Integer, nullable=False)
+    dealer_id: MappedColumn[str] = mapped_column(String(255), ForeignKey("va_dealers.id"), nullable=False)
+    created_by: MappedColumn[str] = mapped_column(
         String(255),
         nullable=True,
     )
-    updated_by = mapped_column(
+    updated_by: MappedColumn[str] = mapped_column(
         String(255),
         nullable=True,
     )
-    deleted_by = mapped_column(
+    deleted_by: MappedColumn[str] = mapped_column(
         String(255),
         nullable=True,
     )
-    created_at = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at = mapped_column(DateTime(timezone=True), server_default=func.now())
-    deletable = mapped_column(Integer, server_default=text("0"))
-    dealer = relationship(Dealer)
-    models = relationship("DealerForecastModel", back_populates="forecast")
+    created_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
+    
+    dealer: MappedColumn[Dealer] = relationship(Dealer)
+    models: MappedColumn[List[DealerForecastModel]] = relationship("DealerForecastModel", back_populates="forecast")
 
 
 @event.listens_for(DealerForecast, "before_insert")
