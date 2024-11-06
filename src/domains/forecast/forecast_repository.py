@@ -52,9 +52,6 @@ class ForecastRepository(IForecastRepository):
             .query(
                 DealerForecast.month.label("month"),
                 DealerForecast.year.label("year"),
-                DealerForecast.dealer_submit.label("dealer_submit"),
-                DealerForecast.remaining_dealer_submit.label("remaining_dealer_submit"),
-                DealerForecast.order_confirmation.label("order_confirmation"),
             )
         )
 

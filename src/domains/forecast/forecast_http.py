@@ -8,6 +8,7 @@ from src.models.responses.auth_response import LoginResponse
 from src.models.responses.basic_response import (
     NoDataResponse,
     PaginationResponse,
+    PaginationMetadata,
 )
 from src.dependencies.auth_dependency import bearer_auth
 
