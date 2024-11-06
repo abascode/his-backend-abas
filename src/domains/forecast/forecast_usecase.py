@@ -1,4 +1,5 @@
 import http
+from typing import List
 
 from fastapi import Depends, HTTPException
 from starlette.requests import Request
@@ -14,6 +15,9 @@ from src.domains.forecast.forecast_repository import ForecastRepository
 from src.domains.master.master_interface import IMasterRepository
 from src.domains.master.master_repository import MasterRepository
 from src.models.requests.forecast_request import UpsertForecastRequest
+from src.models.responses.basic_response import TextValueResponse
+from src.models.responses.forecast_response import DealerForecastModelResponse, DealerForecastMonthResponse, DealerForecastResponse
+from src.models.responses.master_response import CategoryResponse, ModelResponse, SegmentResponse
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
 
@@ -92,3 +96,82 @@ class ForecastUseCase(IForecastUseCase):
         self.forecast_repo.create_forecast(request, forecast)
 
         commit(request, Database.VEHICLE_ALLOCATION)
+        
+    def find_forecast(
+        self, request: Request, forecast_id: str
+    ) -> DealerForecastModelResponse:
+        forecast = self.forecast_repo.find_forecast(request, forecast_id)
+        
+        if forecast is None:
+            raise HTTPException(
+                status_code=http.HTTPStatus.NOT_FOUND,
+                detail=f"Forecast {forecast_id} is not found",
+            )
+        
+        models: List[DealerForecastModelResponse] = []
+        
+        # TODO: nested object, need help
+        for model in forecast.models:
+            model_detail = model.model
+            segment_detail = model_detail.segment
+            category_detail = segment_detail.category
+            model_response = ModelResponse(
+                id=model_detail.id,
+                name=model_detail.name,
+                segment=SegmentResponse(
+                    id=segment_detail.id,
+                    name=segment_detail.name,
+                    category=CategoryResponse(
+                        id=category_detail.id,
+                        name=category_detail.name,
+                    )
+                )
+            )
+            
+            months: List[DealerForecastMonthResponse] = []
+            
+            for month in model.months:
+                months.append(
+                    DealerForecastMonthResponse(
+                        id=month.id,
+                        dealer_forecast_model_id=month.id,
+                        forecast_month=month.forecast_month,
+                        rs_gov=month.rs_gov,
+                        rs_priv=month.rs_priv,
+                        total_rs=month.total_rs,
+                        prev_rs_gov=month.prev_rs_gov,
+                        prev_rs_priv=month.prev_rs_priv,
+                        total_prev_rs=month.total_prev_rs,
+                        ws_gov=month.ws_gov,
+                        ws_priv=month.ws_priv,
+                        total_ws=month.total_ws,
+                        prev_final_ws_gov_conf=month.prev_final_ws_gov_conf,
+                        prev_final_ws_priv_conf=month.prev_final_ws_priv_conf,
+                        prev_final_confirm_allocation=month.prev_final_confirm_allocation,
+                        new_ws_req=month.new_ws_req,
+                        hmsi_allocation=month.hmsi_allocation,
+                        ws_gov_conf=month.ws_gov_conf,
+                        ws_priv_conf=month.ws_priv_conf,
+                        total_ws_conf=month.total_ws_conf,
+                        final_ws_gov_conf=month.final_ws_gov_conf,
+                        final_ws_priv_conf=month.final_ws_priv_conf,
+                        total_final_ws_conf=month.total_final_ws_conf
+                    )
+                )
+            
+            models.append(
+                DealerForecastModelResponse(
+                    id=model.id,
+                    model=model_response,
+                    dealer_forecast_id=model.dealer_forecast_id,
+                    dealer_end_stock=model.dealer_end_stock,
+                    months=months
+                )
+            )      
+        return DealerForecastResponse(
+            id=forecast.id,
+            month=forecast.month,
+            year=forecast.year,
+            dealer=TextValueResponse(text=forecast.dealer.name, value=forecast.dealer.id),
+            models=models
+        )

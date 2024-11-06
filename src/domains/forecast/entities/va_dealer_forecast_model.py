@@ -1,8 +1,6 @@
 from datetime import datetime
 from typing import List
 
-from src.domains.forecast.entities.va_dealer_forecast import DealerForecast
-from src.domains.forecast.entities.va_dealer_forecast_month import DealerForecastMonth
 from src.domains.master.entities.va_model import Model
 from src.shared.entities.basemodel import BaseModel
 from sqlalchemy.orm import mapped_column, relationship, MappedColumn
@@ -35,9 +33,9 @@ class DealerForecastModel(BaseModel):
     updated_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
     
-    forecast: MappedColumn[DealerForecast] = relationship(DealerForecast, back_populates="models")
+    forecast: MappedColumn["DealerForecast"] = relationship("DealerForecast", back_populates="models")
     model: MappedColumn[Model] = relationship(Model)
-    months: MappedColumn[List[DealerForecastMonth]] = relationship("DealerForecastMonth", back_populates="forecast_model")
+    months: MappedColumn[List["DealerForecastMonth"]] = relationship("DealerForecastMonth", back_populates="forecast_model")
 
 
 @event.listens_for(DealerForecastModel, "before_insert")
