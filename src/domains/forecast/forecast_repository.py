@@ -61,9 +61,9 @@ class ForecastRepository(IForecastRepository):
                 ForecastSummaryResponse(
                     month=month,
                     year=year,
-                    dealer_submit=dealer_submit,
-                    remaining_dealer_submit=remaining_dealer_submit,
-                    order_confirmation=order_confirmation,
+                    dealer_submit=0,
+                    remaining_dealer_submit=0,
+                    order_confirmation=0,
                 )
                 for month, year, dealer_submit, remaining_dealer_submit, order_confirmation in res
             ],
