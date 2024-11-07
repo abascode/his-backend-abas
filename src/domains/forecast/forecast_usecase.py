@@ -92,3 +92,20 @@ class ForecastUseCase(IForecastUseCase):
         self.forecast_repo.create_forecast(request, forecast)
 
         commit(request, Database.VEHICLE_ALLOCATION)
+        
+    def get_forecast_summary(
+        self, request: Request, get_forecast_summary_request: ForecastSummaryRequest
+    ) -> tuple[List[ForecastSummaryResponse], int]:
+        res, cnt = self.forecast_repo(request, get_forecast_summary_request)
+
+        return [
+            ForecastSummaryResponse(
+                month= i.month,
+                year= i.year,
+                dealer_submit= i.dealer_submit,
+                remaining_dealer_submit= i.remaining_dealer_submit,
+                order_confirmation= i.order_confirmation,
+            )
+            for i in res
+        ], cnt
+
