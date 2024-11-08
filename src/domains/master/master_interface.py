@@ -28,3 +28,7 @@ class IMasterRepository:
     @abc.abstractmethod
     def find_model(self, request: Request, name: str | None = None) -> Model | None:
         pass
+
+    @abc.abstractmethod
+    def get_dealer_options(self, request: Request, keyword: str) -> List[Dealer]:
+        pass

@@ -43,3 +43,13 @@ class MasterRepository(IMasterRepository):
             query = query.filter(Model.name == name)
 
         return query.first()
+    
+    def get_dealer_options(self, request: Request, name: str) -> List[Dealer]:
+        dealer = (
+            self.get_va_db(request)
+            .query(Dealer)
+            .filter(Dealer.name == name, Dealer.deletable == 0)
+            .all()
+        )
+        if dealer is not None:
+            return dealer
