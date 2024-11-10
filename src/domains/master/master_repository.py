@@ -48,7 +48,7 @@ class MasterRepository(IMasterRepository):
         dealer = (
             self.get_va_db(request)
             .query(Dealer)
-            .filter(Dealer.name == name, Dealer.deletable == 0)
+            .filter(Dealer.name.ilike("%" + name + "%"), Dealer.deletable == 0)
             .all()
         )
         if dealer is not None:
