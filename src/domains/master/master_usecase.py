@@ -27,7 +27,20 @@ class MasterUseCase(IMasterUseCase):
     def get_forecast_orders(
         self, request: Request
     ) -> List[ForecastOrderResponse]:
-        data = self.master_repository.get_forecast_order(request)
+        data = self.master_repository.get_forecast_orders(request)
+
+        return [
+            ForecastOrderResponse(
+                category_id=i.category_id,
+                percentage=i.percentage,
+            )
+            for i in data
+        ]
+    
+    def get_urgent_orders(
+        self, request: Request
+    ) -> List[ForecastOrderResponse]:
+        data = self.master_repository.get_urgent_orders(request)
 
         return [
             ForecastOrderResponse(

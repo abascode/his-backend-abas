@@ -7,7 +7,7 @@ from src.domains.master.entities.va_model import Model
 from src.models.responses.basic_response import TextValueResponse
 from starlette.requests import Request
 from src.domains.master.entities.va_segment import Segment
-
+from src.models.responses.forecast_response import ForecastOrderResponse
 
 class IMasterUseCase:
     @abc.abstractmethod
@@ -17,9 +17,15 @@ class IMasterUseCase:
         pass
     
     @abc.abstractmethod
-    def get_forecast_order(
+    def get_forecast_orders(
         self, request: Request
-    ) -> List[TextValueResponse]:
+    ) -> List[ForecastOrderResponse]:
+        pass
+    
+    @abc.abstractmethod
+    def get_urgent_orders(
+        self, request: Request
+    ) -> List[ForecastOrderResponse]:
         pass
 
 
@@ -41,5 +47,9 @@ class IMasterRepository:
         pass
     
     @abc.abstractmethod
-    def get_forecast_order(self, request: Request) -> List[Segment]:
+    def get_forecast_orders(self, request: Request) -> List[Segment]:
+        pass
+    
+    @abc.abstractmethod
+    def get_urgent_orders(self, request: Request) -> List[Segment]:
         pass

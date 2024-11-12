@@ -34,6 +34,20 @@ def get_dealer_options(
 )
 def get_forecast_orders(
     request: Request, forecast_usecase: IMasterUseCase = Depends(MasterUseCase)
-) -> ListResponse[TextValueResponse]:
+) -> ListResponse[ForecastOrderResponse]:
    res = forecast_usecase.get_forecast_order(request)
    return ListResponse(data=res, message="Success getting forecast orders")
+
+@router.get(
+    "/urgent-orders",
+    dependencies=[Depends(bearer_auth)],
+    response_model=ListResponse[ForecastOrderResponse],
+    summary="Get Urgent Orders",
+    description="Fetches a list of Urgent Orders. Requires bearer token authentication.",
+)
+def get_urgent_orders(
+    request: Request, forecast_usecase: IMasterUseCase = Depends(MasterUseCase)
+) -> ListResponse[ForecastOrderResponse]:
+   res = forecast_usecase.get_urgent_orders(request)
+   return ListResponse(data=res, message="Success getting urgent orders")
+

@@ -57,3 +57,6 @@ class MasterRepository(IMasterRepository):
     
     def get_forecast_orders(self, request: Request) -> List[Segment]:
        return self.get_va_db(request).query(Segment).all()
+   
+    def get_urgent_orders(self, request: Request) -> List[Segment]:
+       return self.get_va_db(request).query(Segment).all()
