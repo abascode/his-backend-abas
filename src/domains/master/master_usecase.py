@@ -2,7 +2,7 @@ from src.domains.master.master_interface import IMasterUseCase, IMasterRepositor
 from src.domains.master.master_repository import MasterRepository
 from fastapi import Depends
 from src.models.responses.basic_response import TextValueResponse
-
+from src.models.responses.forecast_response import ForecastOrderResponse
 
 class MasterUseCase(IMasterUseCase):
     def __init__(
@@ -20,6 +20,19 @@ class MasterUseCase(IMasterUseCase):
             TextValueResponse(
                 text=i.name,
                 value=i.id,
+            )
+            for i in data
+        ]
+    
+    def get_forecast_orders(
+        self, request: Request
+    ) -> List[ForecastOrderResponse]:
+        data = self.master_repository.get_forecast_order(request)
+
+        return [
+            ForecastOrderResponse(
+                category_id=i.category_id,
+                percentage=i.percentage,
             )
             for i in data
         ]
