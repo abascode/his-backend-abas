@@ -15,8 +15,8 @@ class Segment(BaseModel):
     created_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
-    percentage: MappedColumn[int] = mapped_column(Integer, nullable=False)
-    month: MappedColumn[int] = mapped_column(Integer, nullable=False)
-    year: MappedColumn[int] = mapped_column(Integer, nullable=False)
+    percentage: MappedColumn[int] = mapped_column(Integer)
+    month: MappedColumn[int] = mapped_column(Integer)
+    year: MappedColumn[int] = mapped_column(Integer)
 
     category: MappedColumn[Category] = relationship(Category)
