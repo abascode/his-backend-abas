@@ -1,6 +1,7 @@
+from typing import List
 from src.domains.master.master_interface import IMasterUseCase, IMasterRepository
 from src.domains.master.master_repository import MasterRepository
-from fastapi import Depends
+from fastapi import Depends, Request
 from src.models.responses.basic_response import TextValueResponse
 from src.models.responses.forecast_response import ForecastOrderResponse
 

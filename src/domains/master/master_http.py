@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/master", tags=["Vehicle Allocation Master"])
 
 @router.get(
     "/dealers/options",
-    dependencies=[Depends(bearer_auth)],
+    # dependencies=[Depends(bearer_auth)],
     response_model=ListResponse[TextValueResponse],
     summary="Get Dealer Options",
     description="Fetches a list of dealer options based on an optional search parameter. Requires bearer token authentication.",

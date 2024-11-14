@@ -14,7 +14,7 @@ from src.domains.forecast.forecast_interface import (
 from src.domains.forecast.forecast_repository import ForecastRepository
 from src.domains.master.master_interface import IMasterRepository
 from src.domains.master.master_repository import MasterRepository
-from src.models.requests.forecast_request import UpsertForecastRequest
+from src.models.requests.forecast_request import ForecastDetailRequest, UpsertForecastRequest
 from src.models.responses.basic_response import TextValueResponse
 from src.models.responses.forecast_response import DealerForecastModelResponse, DealerForecastMonthResponse, DealerForecastResponse
 from src.models.responses.master_response import CategoryResponse, ModelResponse, SegmentResponse
@@ -97,20 +97,19 @@ class ForecastUseCase(IForecastUseCase):
 
         commit(request, Database.VEHICLE_ALLOCATION)
         
-    def find_forecast(
-        self, request: Request, forecast_id: str
+    def find_forecast_by_query(
+        self, request: Request, query_params: ForecastDetailRequest
     ) -> DealerForecastModelResponse:
-        forecast = self.forecast_repo.find_forecast(request, forecast_id)
+        forecast = self.forecast_repo.find_forecast_by_query(request, query_params)
         
         if forecast is None:
             raise HTTPException(
                 status_code=http.HTTPStatus.NOT_FOUND,
-                detail=f"Forecast {forecast_id} is not found",
+                detail=f"Forecast is not found",
             )
         
         models: List[DealerForecastModelResponse] = []
-        
-        # TODO: nested object, need help
+
         for model in forecast.models:
             model_detail = model.model
             segment_detail = model_detail.segment
