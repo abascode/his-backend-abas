@@ -44,3 +44,6 @@ class DealerForecastResponse(BaseModel):
     dealer: TextValueResponse
     models: List[DealerForecastModelResponse]
     
+class ForecastOrderResponse(BaseModel):
+    category_id: str
+    percentage: int

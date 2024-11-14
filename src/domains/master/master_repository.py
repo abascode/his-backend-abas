@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends, Request
 from src.dependencies.database_dependency import get_va_db
 from src.models.responses.basic_response import TextValueResponse
+from src.domains.master.entities.va_segment import Segment
 
 
 class MasterRepository(IMasterRepository):
@@ -53,3 +54,9 @@ class MasterRepository(IMasterRepository):
         )
         if dealer is not None:
             return dealer
+    
+    def get_forecast_orders(self, request: Request) -> List[Segment]:
+       return self.get_va_db(request).query(Segment).all()
+   
+    def get_urgent_orders(self, request: Request) -> List[Segment]:
+       return self.get_va_db(request).query(Segment).all()
