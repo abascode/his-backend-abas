@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends, Request
 from src.dependencies.database_dependency import get_va_db
 from src.models.responses.basic_response import TextValueResponse
+from src.domains.master.entities.va_segment import Segment
 
 
 class MasterRepository(IMasterRepository):
@@ -43,3 +44,19 @@ class MasterRepository(IMasterRepository):
             query = query.filter(Model.name == name)
 
         return query.first()
+    
+    def get_dealer_options(self, request: Request, name: str) -> List[Dealer]:
+        dealer = (
+            self.get_va_db(request)
+            .query(Dealer)
+            .filter(Dealer.name.ilike("%" + name + "%"), Dealer.deletable == 0)
+            .all()
+        )
+        if dealer is not None:
+            return dealer
+    
+    def get_forecast_orders(self, request: Request) -> List[Segment]:
+       return self.get_va_db(request).query(Segment).all()
+   
+    def get_urgent_orders(self, request: Request) -> List[Segment]:
+       return self.get_va_db(request).query(Segment).all()

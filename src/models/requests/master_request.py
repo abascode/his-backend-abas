@@ -1,4 +1,4 @@
-from src.shared.entities.basemodel import BaseModel
+from pydantic import BaseModel
 
 
 class StockPilotRequest(BaseModel):

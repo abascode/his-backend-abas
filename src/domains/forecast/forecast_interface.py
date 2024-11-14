@@ -4,6 +4,8 @@ from typing import List
 from starlette.requests import Request
 
 from src.domains.forecast.entities.va_dealer_forecast import DealerForecast
+from src.models.requests.forecast_request import ForecastDetailRequest, UpsertForecastRequest
+from src.models.responses.forecast_response import DealerForecastResponse
 from src.models.requests.forecast_request import (
     UpsertForecastRequest,
     ForecastSummaryRequest,
@@ -24,6 +26,12 @@ class IForecastUseCase:
     ) -> tuple[List[ForecastSummaryResponse], int]:
         pass
 
+    @abc.abstractmethod
+    def find_forecast_by_query(
+        self, request: Request, query_params: ForecastDetailRequest
+    ) -> DealerForecastResponse | None:
+        pass
+
 
 class IForecastRepository:
     @abc.abstractmethod
@@ -35,6 +43,12 @@ class IForecastRepository:
     @abc.abstractmethod
     def find_forecast(
         self, request: Request, forecast_id: str
+    ) -> DealerForecast | None:
+        pass
+
+    @abc.abstractmethod
+    def find_forecast_by_query(
+        self, request: Request, query_params: ForecastDetailRequest
     ) -> DealerForecast | None:
         pass
 

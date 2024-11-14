@@ -46,3 +46,8 @@ class ForecastSummaryRequest(BaseModel):
     dealer_submit: int
     remaining_dealer_submit: int
     order_confirmation: int
+
+class ForecastDetailRequest(BaseModel):
+    dealer_id: str
+    month: int
+    year: int

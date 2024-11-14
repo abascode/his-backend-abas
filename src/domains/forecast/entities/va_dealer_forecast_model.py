@@ -42,10 +42,13 @@ class DealerForecastModel(BaseModel):
     forecast: MappedColumn["DealerForecast"] = relationship(
         "DealerForecast", back_populates="models"
     )
+
+    forecast: MappedColumn["DealerForecast"] = relationship("DealerForecast", back_populates="models")
     model: MappedColumn[Model] = relationship(Model)
     months: MappedColumn[List["DealerForecastMonth"]] = relationship(
         "DealerForecastMonth", back_populates="forecast_model"
     )
+    months: MappedColumn[List["DealerForecastMonth"]] = relationship("DealerForecastMonth", back_populates="forecast_model")
 
 
 @event.listens_for(DealerForecastModel, "before_insert")

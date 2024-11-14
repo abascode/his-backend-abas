@@ -5,11 +5,14 @@ from starlette.requests import Request
 
 from src.domains.forecast.forecast_interface import IForecastUseCase
 from src.domains.forecast.forecast_usecase import ForecastUseCase
+from src.models.requests.forecast_request import ForecastDetailRequest, UpsertForecastRequest
 from src.models.requests.forecast_request import (
     UpsertForecastRequest,
     ForecastSummaryRequest,
 )
 from src.models.responses.auth_response import LoginResponse
+from src.models.responses.basic_response import BasicResponse, NoDataResponse
+from src.models.responses.forecast_response import DealerForecastResponse
 from src.models.responses.basic_response import (
     NoDataResponse,
     PaginationResponse,
@@ -33,6 +36,20 @@ def create_forecast(
 ) -> NoDataResponse:
     forecast_uc.upsert_forecast(request, upsert_request)
     return NoDataResponse(message="Success upserting forecast")
+
+@router.get(
+    "",
+    response_model=BasicResponse[DealerForecastResponse],
+    summary="Find Forecast",
+    description="Find forecast by id",
+)
+def find_forecast(
+    request: Request,
+    query_params: ForecastDetailRequest = Depends(),
+    forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
+) -> BasicResponse[DealerForecastResponse]:
+    data = forecast_uc.find_forecast(request, query_params)
+    return BasicResponse(data=data, message='Success finding forecast')
 
 
 @router.get(
