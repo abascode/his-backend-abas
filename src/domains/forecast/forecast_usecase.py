@@ -1,4 +1,5 @@
 import http
+from typing import List
 
 from fastapi import Depends, HTTPException
 from starlette.requests import Request
@@ -13,7 +14,11 @@ from src.domains.forecast.forecast_interface import (
 from src.domains.forecast.forecast_repository import ForecastRepository
 from src.domains.master.master_interface import IMasterRepository
 from src.domains.master.master_repository import MasterRepository
-from src.models.requests.forecast_request import UpsertForecastRequest
+from src.models.requests.forecast_request import (
+    UpsertForecastRequest,
+    ForecastSummaryRequest,
+)
+from src.models.responses.forecast_response import ForecastSummaryResponse
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
 
@@ -92,20 +97,21 @@ class ForecastUseCase(IForecastUseCase):
         self.forecast_repo.create_forecast(request, forecast)
 
         commit(request, Database.VEHICLE_ALLOCATION)
-        
+
     def get_forecast_summary(
         self, request: Request, get_forecast_summary_request: ForecastSummaryRequest
     ) -> tuple[List[ForecastSummaryResponse], int]:
-        res, cnt = self.forecast_repo(request, get_forecast_summary_request)
+        res, cnt = self.forecast_repo.get_forecast_summary(
+            request, get_forecast_summary_request
+        )
 
         return [
             ForecastSummaryResponse(
-                month= i.month,
-                year= i.year,
-                dealer_submit= i.dealer_submit,
-                remaining_dealer_submit= i.remaining_dealer_submit,
-                order_confirmation= i.order_confirmation,
+                month=i.month,
+                year=i.year,
+                dealer_submit=i.dealer_submit,
+                remaining_dealer_submit=i.remaining_dealer_submit,
+                order_confirmation=i.order_confirmation,
             )
             for i in res
         ], cnt
-

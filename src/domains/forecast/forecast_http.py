@@ -1,9 +1,14 @@
+import math
+
 from fastapi import APIRouter, Depends
 from starlette.requests import Request
 
 from src.domains.forecast.forecast_interface import IForecastUseCase
 from src.domains.forecast.forecast_usecase import ForecastUseCase
-from src.models.requests.forecast_request import UpsertForecastRequest
+from src.models.requests.forecast_request import (
+    UpsertForecastRequest,
+    ForecastSummaryRequest,
+)
 from src.models.responses.auth_response import LoginResponse
 from src.models.responses.basic_response import (
     NoDataResponse,
@@ -29,6 +34,7 @@ def create_forecast(
     forecast_uc.upsert_forecast(request, upsert_request)
     return NoDataResponse(message="Success upserting forecast")
 
+
 @router.get(
     "/api/forecasts/summaries",
     dependencies=[Depends(bearer_auth)],
@@ -40,7 +46,7 @@ def get_forecast_summary(
     query: ForecastSummaryRequest = Depends(),
     forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
 ):
-    res, count = forecast_usecase.get_forecast_summary(request, query)
+    res, count = forecast_uc.get_forecast_summary(request, query)
     return PaginationResponse(
         data=res,
         metadata=PaginationMetadata(

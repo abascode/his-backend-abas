@@ -1,3 +1,5 @@
+from typing import Tuple, List
+
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from starlette.requests import Request
@@ -5,6 +7,8 @@ from starlette.requests import Request
 from src.dependencies.database_dependency import get_va_db
 from src.domains.forecast.entities.va_dealer_forecast import DealerForecast
 from src.domains.forecast.forecast_interface import IForecastRepository
+from src.models.requests.forecast_request import ForecastSummaryRequest
+from src.models.responses.forecast_response import ForecastSummaryResponse
 from src.shared.utils.pagination import paginate
 
 
@@ -44,18 +48,16 @@ class ForecastRepository(IForecastRepository):
                 data.deletable = 1
 
     def get_forecast_summary(
-        self, request: Request, forecast_summary_request: ForecastSummaryRequest,
-
-    ) -> DealerForecast:
-        base = (
-            self.get_va_db(request)
-            .query(
-                DealerForecast.month.label("month"),
-                DealerForecast.year.label("year"),
-            )
+        self, request: Request, forecast_summary_request: ForecastSummaryRequest
+    ) -> tuple[list[ForecastSummaryResponse], int]:
+        query = self.get_va_db(request).query(
+            DealerForecast.month.label("month"),
+            DealerForecast.year.label("year"),
         )
 
-        res, count = paginate(query, forecast_summary_request.page, forecast_summary_request.size)
+        res, count = paginate(
+            query, forecast_summary_request.page, forecast_summary_request.size
+        )
         return (
             [
                 ForecastSummaryResponse(
@@ -69,4 +71,3 @@ class ForecastRepository(IForecastRepository):
             ],
             count,
         )
-

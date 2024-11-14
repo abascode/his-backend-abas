@@ -7,12 +7,20 @@ from src.domains.master.entities.va_model import Model
 from src.models.responses.basic_response import TextValueResponse
 from starlette.requests import Request
 
+from src.models.responses.master_response import StockPilotResponse
+
 
 class IMasterUseCase:
     @abc.abstractmethod
     def get_dealer_options(
         self, request: Request, keyword: str
     ) -> List[TextValueResponse]:
+        pass
+
+    @abc.abstractmethod
+    def get_stock_pilots(
+        self, request: Request, year: int, month: int
+    ) -> List[StockPilotResponse]:
         pass
 
 
@@ -27,4 +35,10 @@ class IMasterRepository:
 
     @abc.abstractmethod
     def find_model(self, request: Request, name: str | None = None) -> Model | None:
+        pass
+
+    @abc.abstractmethod
+    def get_stock_pilots(
+        self, request: Request, year: int, month: int
+    ) -> List[StockPilotResponse]:
         pass
