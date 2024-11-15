@@ -35,6 +35,14 @@ class MasterRepository(IMasterRepository):
             self.get_va_db(request).add(dealer)
             self.get_va_db(request).flush()
             return dealer
+        
+    def get_model_list(self, request: Request) -> List[Model]:
+        return (
+            self.get_va_db(request)
+            .query(Model)
+            .filter(Model.deletable == 0)
+            .all()
+        )
 
     def find_model(self, request: Request, name: str | None = None) -> Model | None:
         query = self.get_va_db(request).query(Model).filter(Model.deletable == 0)
