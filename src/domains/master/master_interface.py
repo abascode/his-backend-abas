@@ -47,6 +47,10 @@ class IMasterRepository:
         pass
     
     @abc.abstractmethod
+    def get_model_list(self, request: Request) -> List[Model]:
+        pass    
+        
+    @abc.abstractmethod
     def get_forecast_orders(self, request: Request) -> List[Segment]:
         pass
     
