@@ -1,8 +1,19 @@
+from typing import TypeVar, Generic, List
+
 import datetime
 from typing import List
 from pydantic import BaseModel
 from src.models.responses.basic_response import TextValueResponse
 from src.models.responses.master_response import ModelResponse
+
+
+class ForecastSummaryResponse(BaseModel):
+    month: int
+    year: int
+    dealer_submit: int
+    remaining_dealer_submit: int
+    order_confirmation: int
+
 
 class DealerForecastMonthResponse(BaseModel):
     id: str
@@ -28,22 +39,21 @@ class DealerForecastMonthResponse(BaseModel):
     final_ws_gov_conf: int
     final_ws_priv_conf: int
     total_final_ws_conf: int
-    
+
+
 class DealerForecastModelResponse(BaseModel):
     id: str
     dealer_forecast_id: str
     model: ModelResponse
     dealer_end_stock: int
-    
+
     months: List[DealerForecastMonthResponse]
+
 
 class DealerForecastResponse(BaseModel):
     id: str
     month: int
-    year:int
-    dealer: TextValueResponse
-    models: List[DealerForecastModelResponse]
-    
-class ForecastOrderResponse(BaseModel):
-    category_id: str
-    percentage: int
+    year: int
+    dealer_submit: int
+    remaining_dealer_submit: int
+    order_confirmation: int

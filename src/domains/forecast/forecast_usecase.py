@@ -14,6 +14,11 @@ from src.domains.forecast.forecast_interface import (
 from src.domains.forecast.forecast_repository import ForecastRepository
 from src.domains.master.master_interface import IMasterRepository
 from src.domains.master.master_repository import MasterRepository
+from src.models.requests.forecast_request import (
+    UpsertForecastRequest,
+    ForecastSummaryRequest,
+)
+from src.models.responses.forecast_response import ForecastSummaryResponse
 from src.models.requests.forecast_request import ForecastDetailRequest, UpsertForecastRequest
 from src.models.responses.basic_response import TextValueResponse
 from src.models.responses.forecast_response import DealerForecastModelResponse, DealerForecastMonthResponse, DealerForecastResponse
@@ -96,19 +101,37 @@ class ForecastUseCase(IForecastUseCase):
         self.forecast_repo.create_forecast(request, forecast)
 
         commit(request, Database.VEHICLE_ALLOCATION)
-        
+
     def find_forecast_by_query(
         self, request: Request, query_params: ForecastDetailRequest
     ) -> DealerForecastModelResponse:
         forecast = self.forecast_repo.find_forecast_by_query(request, query_params)
-        
+
         if forecast is None:
             raise HTTPException(
                 status_code=http.HTTPStatus.NOT_FOUND,
                 detail=f"Forecast is not found",
             )
-        
+
         models: List[DealerForecastModelResponse] = []
+
+    def get_forecast_summary(
+        self, request: Request, get_forecast_summary_request: ForecastSummaryRequest
+    ) -> tuple[List[ForecastSummaryResponse], int]:
+        res, cnt = self.forecast_repo.get_forecast_summary(
+            request, get_forecast_summary_request
+        )
+
+        return [
+            ForecastSummaryResponse(
+                month=i.month,
+                year=i.year,
+                dealer_submit=i.dealer_submit,
+                remaining_dealer_submit=i.remaining_dealer_submit,
+                order_confirmation=i.order_confirmation,
+            )
+            for i in res
+        ], cnt
 
         for model in forecast.models:
             model_detail = model.model
@@ -126,9 +149,9 @@ class ForecastUseCase(IForecastUseCase):
                     )
                 )
             )
-            
+
             months: List[DealerForecastMonthResponse] = []
-            
+
             for month in model.months:
                 months.append(
                     DealerForecastMonthResponse(
@@ -157,7 +180,7 @@ class ForecastUseCase(IForecastUseCase):
                         total_final_ws_conf=month.total_final_ws_conf
                     )
                 )
-            
+
             models.append(
                 DealerForecastModelResponse(
                     id=model.id,
@@ -166,7 +189,7 @@ class ForecastUseCase(IForecastUseCase):
                     dealer_end_stock=model.dealer_end_stock,
                     months=months
                 )
-            )      
+            )
         return DealerForecastResponse(
             id=forecast.id,
             month=forecast.month,

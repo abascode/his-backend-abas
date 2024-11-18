@@ -1,3 +1,5 @@
+from typing import Tuple, List
+
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from starlette.requests import Request
@@ -7,6 +9,9 @@ from src.domains.forecast.entities.va_dealer_forecast import DealerForecast
 from src.domains.forecast.entities.va_dealer_forecast_model import DealerForecastModel
 from src.domains.forecast.entities.va_dealer_forecast_month import DealerForecastMonth
 from src.domains.forecast.forecast_interface import IForecastRepository
+from src.models.requests.forecast_request import ForecastSummaryRequest
+from src.models.responses.forecast_response import ForecastSummaryResponse
+from src.shared.utils.pagination import paginate
 from src.domains.master.entities.va_categories import Category
 from src.domains.master.entities.va_dealer import Dealer
 from src.domains.master.entities.va_model import Model
@@ -38,10 +43,10 @@ class ForecastRepository(IForecastRepository):
             .filter(DealerForecast.id == forecast_id, DealerForecast.deletable == 0)
             .first()
         )
-        
+
     def find_forecast_by_query(
-        self, 
-        request: Request, 
+        self,
+        request: Request,
         query_params: ForecastDetailRequest
         ) -> DealerForecast | None:
         return (
@@ -63,3 +68,28 @@ class ForecastRepository(IForecastRepository):
                 self.get_va_db(request).delete(data)
             else:
                 data.deletable = 1
+
+    def get_forecast_summary(
+        self, request: Request, forecast_summary_request: ForecastSummaryRequest
+    ) -> tuple[list[ForecastSummaryResponse], int]:
+        query = self.get_va_db(request).query(
+            DealerForecast.month.label("month"),
+            DealerForecast.year.label("year"),
+        )
+
+        res, count = paginate(
+            query, forecast_summary_request.page, forecast_summary_request.size
+        )
+        return (
+            [
+                ForecastSummaryResponse(
+                    month=month,
+                    year=year,
+                    dealer_submit=0,
+                    remaining_dealer_submit=0,
+                    order_confirmation=0,
+                )
+                for month, year, dealer_submit, remaining_dealer_submit, order_confirmation in res
+            ],
+            count,
+        )
