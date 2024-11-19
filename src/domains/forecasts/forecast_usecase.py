@@ -16,13 +16,16 @@ from src.domains.forecasts.forecast_repository import ForecastRepository
 from src.domains.masters.entities.va_dealers import Dealer
 from src.domains.masters.master_interface import IMasterRepository
 from src.domains.masters.master_repository import MasterRepository
-from src.models.requests.forecast_request import CreateForecastRequest
+from src.models.requests.forecast_request import (
+    CreateForecastRequest,
+    GetForecastSummaryRequest,
+)
+from src.models.responses.forecast_response import GetForecastSummaryResponse
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
 
 
 class ForecastUseCase(IForecastUseCase):
-
     def __init__(
         self,
         forecast_repo: IForecastRepository = Depends(ForecastRepository),
@@ -51,7 +54,6 @@ class ForecastUseCase(IForecastUseCase):
 
         if forecast is None:
             forecast = Forecast()
-            print(forecast.details)
 
         forecast.id = create_forecast_request.record_id
         forecast.name = create_forecast_request.record_name
@@ -152,6 +154,15 @@ class ForecastUseCase(IForecastUseCase):
                     new_detail.forecast_id = forecast.id
                     self.forecast_repo.create_forecast_detail(request, new_detail)
         commit(request, Database.VEHICLE_ALLOCATION)
+
+    def get_forecast_summary(
+        self, request: Request, query: GetForecastSummaryRequest
+    ) -> tuple[List[GetForecastSummaryResponse], int]:
+        data, total_count = self.forecast_repo.get_forecast_summary_response(
+            request, query
+        )
+
+        return data, total_count
 
     def convert_request_to_detail(
         self, request: Request, detail: dict

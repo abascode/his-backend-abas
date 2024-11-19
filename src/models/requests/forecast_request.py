@@ -2,6 +2,8 @@ from typing import List
 
 from pydantic import BaseModel
 
+from src.models.requests.basic_request import TableRequest
+
 
 class CreateForecastRequest(BaseModel):
     record_id: str
@@ -11,3 +13,7 @@ class CreateForecastRequest(BaseModel):
     year: int
     month: int
     details: List[dict]
+
+
+class GetForecastSummaryRequest(TableRequest, BaseModel):
+    pass

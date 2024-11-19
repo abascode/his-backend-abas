@@ -6,7 +6,11 @@ from starlette.requests import Request
 from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
-from src.models.requests.forecast_request import CreateForecastRequest
+from src.models.requests.forecast_request import (
+    CreateForecastRequest,
+    GetForecastSummaryRequest,
+)
+from src.models.responses.forecast_response import GetForecastSummaryResponse
 
 
 class IForecastUseCase:
@@ -14,6 +18,12 @@ class IForecastUseCase:
     def upsert_forecast(
         self, request: Request, create_forecast_request: CreateForecastRequest
     ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def get_forecast_summary(
+        self, request: Request, query: GetForecastSummaryRequest
+    ) -> tuple[List[GetForecastSummaryResponse], int]:
         pass
 
 
@@ -36,4 +46,10 @@ class IForecastRepository:
     def create_forecast_detail_month(
         self, request: Request, forecast_detail_month: ForecastDetailMonth
     ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def get_forecast_summary_response(
+        self, request: Request, query: GetForecastSummaryRequest
+    ) -> tuple[List[GetForecastSummaryResponse], int]:
         pass
