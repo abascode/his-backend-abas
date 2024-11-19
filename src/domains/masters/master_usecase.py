@@ -47,7 +47,7 @@ class MasterUseCase(IMasterUseCase):
 
         return [
             TextValueResponse(
-                text=i.manufacture_code,
+                text=i.id,
                 value = i.id,
             )
             for i in models

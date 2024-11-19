@@ -13,9 +13,6 @@ from src.domains.masters.master_interface import IMasterRepository
 
 
 class MasterRepository(IMasterRepository):
-
-
-
     def __init__(self, va_db: Session = Depends(get_va_db)):
         self.va_db = va_db
 
