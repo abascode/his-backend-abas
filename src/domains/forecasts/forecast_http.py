@@ -20,6 +20,6 @@ def upsert_forecast(
     upsert_forecast_request: CreateForecastRequest,
     forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
 ) -> NoDataResponse:
-    forecast_uc.create_forecast(request, upsert_forecast_request)
+    forecast_uc.upsert_forecast(request, upsert_forecast_request)
 
     return NoDataResponse(message="Success Upserting Forecast")

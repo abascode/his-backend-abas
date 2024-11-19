@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel
 
 
@@ -8,4 +10,4 @@ class CreateForecastRequest(BaseModel):
     dealer_code: str
     year: int
     month: int
-    details: dict
+    details: List[dict]

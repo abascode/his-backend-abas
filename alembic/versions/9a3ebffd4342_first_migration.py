@@ -1,8 +1,8 @@
 """first_migration
 
-Revision ID: ec0a081a5fa0
+Revision ID: 9a3ebffd4342
 Revises: 
-Create Date: 2024-11-19 11:55:34.434059
+Create Date: 2024-11-19 14:13:58.925538
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ec0a081a5fa0'
+revision: str = '9a3ebffd4342'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -95,6 +95,7 @@ def upgrade() -> None:
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('forecast_id', sa.String(), nullable=False),
     sa.Column('model_id', sa.String(), nullable=False),
+    sa.Column('end_stock', sa.Integer(), nullable=False),
     sa.Column('created_by', sa.String(length=255), nullable=True),
     sa.Column('updated_by', sa.String(length=255), nullable=True),
     sa.Column('deleted_by', sa.String(length=255), nullable=True),
@@ -108,7 +109,7 @@ def upgrade() -> None:
     op.create_table('va_forecast_detail_months',
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('forecast_detail_id', sa.String(), nullable=False),
-    sa.Column('forecast_month', sa.String(), nullable=False),
+    sa.Column('forecast_month', sa.Integer(), nullable=False),
     sa.Column('rs_gov', sa.Integer(), nullable=False),
     sa.Column('ws_gov', sa.Integer(), nullable=False),
     sa.Column('rs_priv', sa.Integer(), nullable=False),

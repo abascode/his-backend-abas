@@ -3,6 +3,7 @@ from typing import List
 
 from starlette.requests import Request
 
+from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.models.requests.forecast_request import CreateForecastRequest
@@ -10,7 +11,7 @@ from src.models.requests.forecast_request import CreateForecastRequest
 
 class IForecastUseCase:
     @abc.abstractmethod
-    def create_forecast(
+    def upsert_forecast(
         self, request: Request, create_forecast_request: CreateForecastRequest
     ) -> None:
         pass
@@ -26,7 +27,13 @@ class IForecastRepository:
         pass
 
     @abc.abstractmethod
-    def bulk_create_forecast_detail(
-        self, request: Request, forecast_details: List[ForecastDetail]
+    def create_forecast_detail(
+        self, request: Request, forecast_detail: ForecastDetail
+    ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def create_forecast_detail_month(
+        self, request: Request, forecast_detail_month: ForecastDetailMonth
     ) -> None:
         pass

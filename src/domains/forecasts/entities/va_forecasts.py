@@ -44,4 +44,4 @@ class Forecast(BaseModel):
     details: Mapped["ForecastDetail"] = relationship(
         "ForecastDetail", back_populates="forecast"
     )
-    dealer: Mapped["Dealer"] = relationship("Dealer", back_populates="forecasts")
+    dealer: Mapped["Dealer"] = relationship("Dealer")

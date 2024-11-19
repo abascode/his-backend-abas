@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from src.dependencies.database_dependency import get_va_db
+from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.domains.forecasts.forecast_interface import IForecastRepository
@@ -32,8 +33,14 @@ class ForecastRepository(IForecastRepository):
             .first()
         )
 
-    def bulk_create_forecast_detail(
-        self, request: Request, forecast_details: List[ForecastDetail]
+    def create_forecast_detail(
+        self, request: Request, forecast_detail: ForecastDetail
     ) -> None:
-        self.get_va_db(request).add_all(forecast_details)
+        self.get_va_db(request).add(forecast_detail)
+        self.get_va_db(request).flush()
+
+    def create_forecast_detail_month(
+        self, request: Request, forecast_detail_month: ForecastDetailMonth
+    ) -> None:
+        self.get_va_db(request).add(forecast_detail_month)
         self.get_va_db(request).flush()
