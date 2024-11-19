@@ -1,8 +1,8 @@
-"""fix column type
+"""initial migrations
 
-Revision ID: f0c65e62a69c
+Revision ID: 436033fc25f0
 Revises: 
-Create Date: 2024-11-19 14:05:45.747778
+Create Date: 2024-11-19 14:22:45.793237
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'f0c65e62a69c'
+revision: str = '436033fc25f0'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -43,6 +43,18 @@ def upgrade() -> None:
     )
     op.create_table('va_segments',
     sa.Column('id', sa.String(length=255), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('va_slot_calculations',
+    sa.Column('id', sa.String(length=255), nullable=False),
+    sa.Column('month', sa.Integer(), nullable=False),
+    sa.Column('year', sa.Integer(), nullable=False),
+    sa.Column('created_by', sa.String(length=255), nullable=True),
+    sa.Column('updated_by', sa.String(length=255), nullable=True),
+    sa.Column('deleted_by', sa.String(length=255), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('deletable', sa.Integer(), server_default=sa.text('0'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('va_forecasts',
@@ -100,6 +112,35 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['category_id'], ['va_categories.id'], ),
     sa.PrimaryKeyConstraint('month', 'year', 'category_id')
     )
+    op.create_table('va_slot_calculation_order_configurations',
+    sa.Column('slot_calculation_id', sa.String(length=255), nullable=False),
+    sa.Column('category_id', sa.String(length=255), nullable=False),
+    sa.Column('forecast_percentage', sa.Integer(), nullable=False),
+    sa.Column('urgent_percentage', sa.Integer(), nullable=False),
+    sa.Column('created_by', sa.String(length=255), nullable=True),
+    sa.Column('updated_by', sa.String(length=255), nullable=True),
+    sa.Column('deleted_by', sa.String(length=255), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('deletable', sa.Integer(), server_default=sa.text('0'), nullable=False),
+    sa.ForeignKeyConstraint(['category_id'], ['va_categories.id'], ),
+    sa.ForeignKeyConstraint(['slot_calculation_id'], ['va_slot_calculations.id'], ),
+    sa.PrimaryKeyConstraint('slot_calculation_id', 'category_id')
+    )
+    op.create_table('va_slot_calculation_stock_pilots',
+    sa.Column('slot_calculation_id', sa.String(length=255), nullable=False),
+    sa.Column('segment_id', sa.String(length=255), nullable=False),
+    sa.Column('percentage', sa.Integer(), nullable=False),
+    sa.Column('created_by', sa.String(length=255), nullable=True),
+    sa.Column('updated_by', sa.String(length=255), nullable=True),
+    sa.Column('deleted_by', sa.String(length=255), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('deletable', sa.Integer(), server_default=sa.text('0'), nullable=False),
+    sa.ForeignKeyConstraint(['segment_id'], ['va_segments.id'], ),
+    sa.ForeignKeyConstraint(['slot_calculation_id'], ['va_slot_calculations.id'], ),
+    sa.PrimaryKeyConstraint('slot_calculation_id', 'segment_id')
+    )
     op.create_table('va_stock_pilots',
     sa.Column('month', sa.Integer(), nullable=False),
     sa.Column('year', sa.Integer(), nullable=False),
@@ -121,6 +162,25 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['forecast_id'], ['va_forecasts.id'], ),
     sa.ForeignKeyConstraint(['model_id'], ['va_models.id'], ),
     sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('va_slot_calculation_details',
+    sa.Column('slot_calculation_id', sa.String(length=255), nullable=False),
+    sa.Column('forecast_month', sa.Integer(), nullable=False),
+    sa.Column('model_id', sa.String(length=255), nullable=False),
+    sa.Column('take_off', sa.Integer(), nullable=True),
+    sa.Column('bo', sa.Integer(), nullable=True),
+    sa.Column('soa', sa.Integer(), nullable=True),
+    sa.Column('oc', sa.Integer(), nullable=True),
+    sa.Column('booking_prospect', sa.Integer(), nullable=True),
+    sa.Column('created_by', sa.String(length=255), nullable=True),
+    sa.Column('updated_by', sa.String(length=255), nullable=True),
+    sa.Column('deleted_by', sa.String(length=255), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('deletable', sa.Integer(), server_default=sa.text('0'), nullable=False),
+    sa.ForeignKeyConstraint(['model_id'], ['va_models.id'], ),
+    sa.ForeignKeyConstraint(['slot_calculation_id'], ['va_slot_calculations.id'], ),
+    sa.PrimaryKeyConstraint('slot_calculation_id')
     )
     op.create_table('va_forecast_detail_months',
     sa.Column('id', sa.String(length=255), nullable=False),
@@ -162,12 +222,16 @@ def upgrade() -> None:
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('va_forecast_detail_months')
+    op.drop_table('va_slot_calculation_details')
     op.drop_table('va_forecast_details')
     op.drop_table('va_stock_pilots')
+    op.drop_table('va_slot_calculation_stock_pilots')
+    op.drop_table('va_slot_calculation_order_configurations')
     op.drop_table('va_order_configurations')
     op.drop_table('va_monthly_target_details')
     op.drop_table('va_models')
     op.drop_table('va_forecasts')
+    op.drop_table('va_slot_calculations')
     op.drop_table('va_segments')
     op.drop_table('va_monthly_targets')
     op.drop_table('va_dealers')
