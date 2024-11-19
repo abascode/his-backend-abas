@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from starlette.requests import Request
@@ -31,3 +33,13 @@ class MasterRepository(IMasterRepository):
         else:
             temp.name = dealer.name
         return dealer
+
+    def get_dealer_options(self, request: Request, search: str | None = None) -> List[Dealer]:
+        dealer = (
+            self.get_va_db(request)
+            .query(Dealer)
+            .filter(Dealer.name == search)
+            .all()
+        )
+        if dealer is not None:
+            return dealer
