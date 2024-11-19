@@ -50,7 +50,8 @@ class ForecastUseCase(IForecastUseCase):
         is_create = forecast is None
 
         if forecast is None:
-            forecast = Forecast(details=[])
+            forecast = Forecast()
+            print(forecast.details)
 
         forecast.id = create_forecast_request.record_id
         forecast.name = create_forecast_request.record_name
@@ -59,20 +60,21 @@ class ForecastUseCase(IForecastUseCase):
         forecast.month = create_forecast_request.month
 
         new_details: Dict[str, ForecastDetail] = {
-            i.id: self.convert_request_to_detail(request, i)
+            i["dealer_forecast_id"]: self.convert_request_to_detail(request, i)
             for i in create_forecast_request.details
         }
 
         new_detail_months: Dict[str, Dict[int, ForecastDetailMonth]] = {}
 
         for i in new_details.values():
-            if i.forecast_id not in new_detail_months:
-                new_detail_months[i.forecast_id] = {}
+            if i.id not in new_detail_months:
+                new_detail_months[i.id] = {}
 
             for j in i.months:
-                new_detail_months[i.forecast_id][j.month] = j
+                new_detail_months[i.id][j.forecast_month] = j
 
         if is_create:
+            forecast.details = list(new_details.values())
             self.forecast_repo.create_forecast(request, forecast)
         else:
             current_details: Dict[str, ForecastDetail] = {
@@ -80,10 +82,10 @@ class ForecastUseCase(IForecastUseCase):
             }
             current_detail_months: Dict[str, Dict[int, ForecastDetailMonth]] = {}
             for i in current_details.values():
-                if i.forecast_id not in current_detail_months:
-                    current_detail_months[i.forecast_id] = {}
+                if i.id not in current_detail_months:
+                    current_detail_months[i.id] = {}
                 for j in i.months:
-                    current_detail_months[i.forecast_id][j.month] = j
+                    current_detail_months[i.id][j.forecast_month] = j
 
             for current_detail in current_details.values():
                 if current_detail.id not in new_details:
@@ -93,7 +95,7 @@ class ForecastUseCase(IForecastUseCase):
                 else:
                     for current_detail_month in current_detail.months:
                         if (
-                            current_detail_month.month
+                            current_detail_month.forecast_month
                             not in new_detail_months[current_detail.id]
                         ):
                             current_detail_month.deletable = 1
@@ -104,11 +106,11 @@ class ForecastUseCase(IForecastUseCase):
                     current_details[new_detail.id].end_stock = new_detail.end_stock
                     for new_detail_month in new_detail.months:
                         if (
-                            new_detail_month.month
+                            new_detail_month.forecast_month
                             in current_detail_months[new_detail.id]
                         ):
                             current_detail_month = current_detail_months[new_detail.id][
-                                new_detail_month.month
+                                new_detail_month.forecast_month
                             ]
                             current_detail_month.forecast_month = (
                                 new_detail_month.forecast_month
@@ -138,10 +140,16 @@ class ForecastUseCase(IForecastUseCase):
                                 new_detail_month.hmsi_allocation
                             )
                         else:
+                            print(
+                                new_detail_month.forecast_month,
+                                new_detail_month.forecast_detail_id,
+                            )
+
                             self.forecast_repo.create_forecast_detail_month(
                                 request, new_detail_month
                             )
                 else:
+                    new_detail.forecast_id = forecast.id
                     self.forecast_repo.create_forecast_detail(request, new_detail)
         commit(request, Database.VEHICLE_ALLOCATION)
 
@@ -155,7 +163,8 @@ class ForecastUseCase(IForecastUseCase):
             if match:
                 if match.group(1) not in months_map:
                     months_map[match.group(1)] = ForecastDetailMonth(
-                        forecast_month=int(match.group(1))
+                        forecast_month=int(match.group(1)),
+                        forecast_detail_id=detail["dealer_forecast_id"],
                     )
                 if match.group(2) == "rs_gov":
                     months_map[match.group(1)].rs_gov = v
@@ -192,5 +201,5 @@ class ForecastUseCase(IForecastUseCase):
             model_id=detail["model_varian"],
             end_stock=detail["end_stock"],
             id=detail["dealer_forecast_id"],
-            months=[ForecastDetailMonth(**i) for i in months_map.values()],
+            months=[i for i in months_map.values()],
         )
