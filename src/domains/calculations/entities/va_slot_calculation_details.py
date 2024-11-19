@@ -10,11 +10,11 @@ class SlotCalculationDetail(BaseModel):
     __tablename__ = "va_slot_calculation_details"
     
     slot_calculation_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_slot_calculations.id"), primary_key=True,nullable=False
+        String(255), ForeignKey("va_slot_calculations.id",  onupdate="CASCADE"), primary_key=True,nullable=False
     )
     forecast_month: MappedColumn[int] = mapped_column(Integer, nullable=False)
     model_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_models.id"), nullable=False
+        String(255), ForeignKey("va_models.id", onupdate="CASCADE"), nullable=False
     )
     take_off: MappedColumn[int] = mapped_column(Integer, nullable=True)
     bo: MappedColumn[int] = mapped_column(Integer, nullable=True)

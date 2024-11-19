@@ -11,7 +11,7 @@ from src.shared.utils.xid import generate_xid
 class ForecastDetailMonth(BaseModel):
     __tablename__ = "va_forecast_detail_months"
     id: MappedColumn[str] = mapped_column(String(255), primary_key=True, nullable=False)
-    forecast_detail_id: MappedColumn[str] = mapped_column(String(255), ForeignKey("va_forecast_details.id"),nullable=False)
+    forecast_detail_id: MappedColumn[str] = mapped_column(String(255), ForeignKey("va_forecast_details.id", onupdate="CASCADE"),nullable=False)
     forecast_month: MappedColumn[int] = mapped_column(Integer, nullable=False)
     rs_gov:  MappedColumn[int]  = mapped_column(Integer, nullable=True)
     ws_gov:  MappedColumn[int] = mapped_column(Integer, nullable=True)

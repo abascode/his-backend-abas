@@ -9,11 +9,11 @@ from datetime import datetime
 
 class MonthlyTargetDetail(BaseModel):
     __tablename__ = "va_monthly_target_details"
-    month_target_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_monthly_targets.id"),primary_key=True, nullable=False)
+    month_target_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_monthly_targets.id", onupdate="CASCADE"),primary_key=True, nullable=False)
     forecast_month: MappedColumn[int] = mapped_column(String, nullable=False)
-    dealer_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_dealers.id"),nullable=False)
+    dealer_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_dealers.id", onupdate="CASCADE"),nullable=False)
     target: MappedColumn[int] = mapped_column(Integer, nullable=False)
-    category_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_categories.id"),nullable=False)
+    category_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_categories.id", onupdate="CASCADE"),nullable=False)
     
     created_by: MappedColumn[str] = mapped_column(
         String(255),

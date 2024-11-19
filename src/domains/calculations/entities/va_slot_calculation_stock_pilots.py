@@ -10,10 +10,10 @@ class SlotCalculationStockPilot(BaseModel):
     __tablename__ = "va_slot_calculation_stock_pilots"
     
     slot_calculation_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_slot_calculations.id"), primary_key=True,nullable=False
+        String(255), ForeignKey("va_slot_calculations.id", onupdate="CASCADE"), primary_key=True,nullable=False
     )
     segment_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_segments.id"), primary_key=True,nullable=False
+        String(255), ForeignKey("va_segments.id", onupdate="CASCADE"), primary_key=True,nullable=False
     )
     percentage: MappedColumn[int] = mapped_column(Integer, nullable=False)
     
