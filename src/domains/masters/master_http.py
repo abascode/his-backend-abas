@@ -3,7 +3,9 @@ from starlette.requests import Request
 
 from src.domains.masters.master_interface import IMasterUseCase
 from src.domains.masters.master_usecase import MasterUseCase
+from src.models.requests.master_request import GetOrderConfigurationRequest, GetStockPilotRequest
 from src.models.responses.basic_response import TextValueResponse,ListResponse
+from src.models.responses.master_response import OrderConfigurationsResponse, StockPilotsResponse
 
 router = APIRouter(prefix="/api/master", tags=["Master"])
 
@@ -34,3 +36,37 @@ def get_model_options(
 )->ListResponse[TextValueResponse]:
     models = model_uc.get_model_options(request,search)
     return ListResponse(data=models, message="Success Fetching Model Options")
+
+
+class OrderApprovalMatrixResponse:
+    pass
+
+
+@router.get(
+    "/orders-configuration",
+    response_model= ListResponse[OrderConfigurationsResponse],
+    summary="Order Configuration",
+    description="Order Configuration",
+)
+def get_order_configuration(
+    request: Request,
+    order_configuration_request:GetOrderConfigurationRequest=Depends(),
+    order_config_uc: IMasterUseCase = Depends(MasterUseCase),
+)->ListResponse[OrderConfigurationsResponse]:
+    orders = order_config_uc.get_order_configuration(request,order_configuration_request)
+    return ListResponse(data=orders, message="Success Fetching Orders Configuration")
+
+@router.get(
+    "/api/master/stockpilots",
+    response_model= ListResponse[StockPilotsResponse],
+    summary="Stock Pilot",
+    description="Stock Pilot",
+)
+def get_stock_pilots(
+    request: Request,
+    stock_pilots_request:GetStockPilotRequest=Depends(),
+    order_config_uc: IMasterUseCase = Depends(MasterUseCase),
+)->ListResponse[StockPilotsResponse]:
+    stock_pilots = order_config_uc.get_order_configuration(request,stock_pilots_request)
+    return ListResponse(data=stock_pilots, message="Success Fetching Orders Configuration")
+
