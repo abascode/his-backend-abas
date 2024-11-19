@@ -1,6 +1,8 @@
+from typing import List
+
 from sqlalchemy import event, ForeignKey
 
-from sqlalchemy import DateTime, Integer, String, func, text
+from sqlalchemy import DateTime, Integer, String, func, text, event
 from src.shared.entities.basemodel import BaseModel
 from src.shared.utils.xid import generate_xid
 
@@ -41,7 +43,17 @@ class Forecast(BaseModel):
     )
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
 
-    details: Mapped["ForecastDetail"] = relationship(
+    details: Mapped[List["ForecastDetail"]] = relationship(
         "ForecastDetail", back_populates="forecast"
     )
     dealer: Mapped["Dealer"] = relationship("Dealer", back_populates="forecasts")
+
+
+@event.listens_for(Forecast, "before_insert")
+def before_insert(mapper, connection, target: Forecast):
+    target.created_at = datetime.now()
+
+
+@event.listens_for(Forecast, "before_update")
+def before_update(mapper, connection, target: Forecast):
+    target.updated_at = datetime.now()
