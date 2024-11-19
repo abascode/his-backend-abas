@@ -1,16 +1,20 @@
 app:
   port: 8000
-  name: his-part-price-backend
-  environment: develop
-
+  name: his-vehicle-allocation-backend
+  environment: local
 
 database:
-  part_price:
+  vehicle_allocation:
     host: "localhost"
     port: 5432
-    name: "his-part-price-dev"
+    name: "vehicle_allocations"
     username: "postgres"
-    password: "Zuzok,hPV+1o|]RO"
+    password: "postgres"
 
-outbounds:
-  dealer_part_price
+gcs:
+  private: "tl-his2-private"
+  public: "tl-his2-public"
+
+outbound:
+  iam:
+    base_url: "http://34.101.141.65/iam_api"
