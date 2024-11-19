@@ -6,7 +6,15 @@ from starlette.requests import Request
 from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
-from src.models.requests.forecast_request import CreateForecastRequest
+from src.models.requests.forecast_request import (
+    CreateForecastRequest,
+    GetForecastSummaryRequest,
+    GetForecastDetailRequest,
+)
+from src.models.responses.forecast_response import (
+    GetForecastSummaryResponse,
+    GetForecastResponse,
+)
 
 
 class IForecastUseCase:
@@ -16,6 +24,18 @@ class IForecastUseCase:
     ) -> None:
         pass
 
+    @abc.abstractmethod
+    def get_forecast_summary(
+        self, request: Request, query: GetForecastSummaryRequest
+    ) -> tuple[List[GetForecastSummaryResponse], int]:
+        pass
+
+    @abc.abstractmethod
+    def get_forecast_detail(
+        self, request: Request, get_forecast_detail_request: GetForecastDetailRequest
+    ) -> GetForecastResponse:
+        pass
+
 
 class IForecastRepository:
     @abc.abstractmethod
@@ -23,7 +43,14 @@ class IForecastRepository:
         pass
 
     @abc.abstractmethod
-    def find_forecast(self, request: Request, forecast_id: str) -> Forecast | None:
+    def find_forecast(
+        self,
+        request: Request,
+        forecast_id: str,
+        dealer_id: str = None,
+        month: int = None,
+        year: int = None,
+    ) -> Forecast | None:
         pass
 
     @abc.abstractmethod
@@ -36,4 +63,10 @@ class IForecastRepository:
     def create_forecast_detail_month(
         self, request: Request, forecast_detail_month: ForecastDetailMonth
     ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def get_forecast_summary_response(
+        self, request: Request, query: GetForecastSummaryRequest
+    ) -> tuple[List[GetForecastSummaryResponse], int]:
         pass

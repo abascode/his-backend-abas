@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import Depends
+from sqlalchemy import text, literal
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
@@ -9,6 +10,9 @@ from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDet
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.domains.forecasts.forecast_interface import IForecastRepository
+from src.models.requests.forecast_request import GetForecastSummaryRequest
+from src.models.responses.forecast_response import GetForecastSummaryResponse
+from src.shared.utils.pagination import paginate
 
 
 class ForecastRepository(IForecastRepository):
@@ -17,21 +21,35 @@ class ForecastRepository(IForecastRepository):
         self.va_db = va_db
 
     def get_va_db(self, request: Request) -> Session:
-        return (
-            request.state.va_db if request.state.va_db is not None else self.get_va_db
-        )
+        return request.state.va_db if request.state.va_db is not None else self.va_db
 
     def create_forecast(self, request: Request, forecast: Forecast) -> None:
         self.get_va_db(request).add(forecast)
         self.get_va_db(request).flush()
 
-    def find_forecast(self, request: Request, forecast_id: str) -> Forecast | None:
-        return (
-            self.get_va_db(request)
-            .query(Forecast)
-            .filter(Forecast.id == forecast_id)
-            .first()
-        )
+    def find_forecast(
+        self,
+        request: Request,
+        forecast_id: str = None,
+        dealer_id: str = None,
+        month: int = None,
+        year: int = None,
+    ) -> Forecast | None:
+        query = self.get_va_db(request).query(Forecast).filter(Forecast.deletable == 0)
+
+        if forecast_id is not None:
+            query = query.filter(Forecast.id == forecast_id)
+
+        if dealer_id is not None:
+            query = query.filter(Forecast.dealer_id == dealer_id)
+
+        if month is not None:
+            query = query.filter(Forecast.month == month)
+
+        if year is not None:
+            query = query.filter(Forecast.year == year)
+
+        return query.first()
 
     def create_forecast_detail(
         self, request: Request, forecast_detail: ForecastDetail
@@ -44,3 +62,44 @@ class ForecastRepository(IForecastRepository):
     ) -> None:
         self.get_va_db(request).add(forecast_detail_month)
         self.get_va_db(request).flush()
+
+    def get_forecast_summary_response(
+        self, request: Request, get_summary_request: GetForecastSummaryRequest
+    ) -> tuple[List[GetForecastSummaryResponse], int]:
+        query = self.get_va_db(request).query(
+            Forecast.month.label("month"),
+            Forecast.year.label("year"),
+            literal(0).label("dealer_submit"),
+            literal(0).label("remaining_dealer_submit"),
+            literal(0).label("order_confirmation"),
+        )
+
+        res, cnt = paginate(
+            query,
+            get_summary_request.page,
+            get_summary_request.size,
+        )
+
+        return [
+            GetForecastSummaryResponse(
+                year=year,
+                month=month,
+                dealer_submit=dealer_submit,
+                remaining_dealer_submit=remaining_dealer_submit,
+                order_confirmation=order_confirmation,
+            )
+            for year, month, dealer_submit, remaining_dealer_submit, order_confirmation in res
+        ], cnt
+
+    def find_forecast_detail(
+        self, request: Request, month: int, year: int, dealer_id: str
+    ) -> ForecastDetail | None:
+        return (
+            self.get_va_db(request)
+            .query(ForecastDetail)
+            .filter(
+                ForecastDetail.forecast.month == month,
+                ForecastDetail.forecast.year == year,
+                ForecastDetail.dealer_id,
+            )
+        )
