@@ -43,7 +43,7 @@ class OrderApprovalMatrixResponse:
 
 
 @router.get(
-    "/orders-configuration",
+    "/order-configuration",
     response_model= ListResponse[OrderConfigurationsResponse],
     summary="Order Configuration",
     description="Order Configuration",
@@ -57,7 +57,7 @@ def get_order_configuration(
     return ListResponse(data=orders, message="Success Fetching Orders Configuration")
 
 @router.get(
-    "/api/master/stockpilots",
+    "/stock-pilots",
     response_model= ListResponse[StockPilotsResponse],
     summary="Stock Pilot",
     description="Stock Pilot",

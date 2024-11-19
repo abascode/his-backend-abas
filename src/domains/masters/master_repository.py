@@ -21,7 +21,7 @@ class MasterRepository(IMasterRepository):
 
     def get_va_db(self, request: Request) -> Session:
         return (
-            request.state.va_db if request.state.va_db is not None else self.get_va_db
+            request.state.va_db if request.state.va_db is not None else self.va_db
         )
 
     def find_model(self, request: Request, model_id: str) -> Model | None:
