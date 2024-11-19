@@ -4,8 +4,9 @@ from src.shared.entities.basemodel import BaseModel
 from src.domains.masters.entities.va_categories import Category
 from src.domains.masters.entities.va_dealers import Dealer
 from src.domains.masters.entities.va_segments import Segment
-# from src.domains.masters.entities.va_stock_pilots import StockPilot
+from src.domains.masters.entities.va_stock_pilots import StockPilot
 from src.domains.masters.entities.va_models import Model
+from src.domains.masters.entities.va_order_configurations import OrderConfiguration
 
 # Forecast
 from src.domains.forecasts.entities.va_forecasts import Forecast

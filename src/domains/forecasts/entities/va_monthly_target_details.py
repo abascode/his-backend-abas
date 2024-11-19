@@ -4,7 +4,7 @@ from src.shared.entities.basemodel import BaseModel
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func, text
 from src.shared.entities.basemodel import BaseModel
-from sqlalchemy.orm import mapped_column, MappedColumn, relationship
+from sqlalchemy.orm import mapped_column, MappedColumn, relationship, Mapped
 from datetime import datetime
 
 class MonthlyTargetDetail(BaseModel):
@@ -31,6 +31,6 @@ class MonthlyTargetDetail(BaseModel):
     updated_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
     
-    monthly_target: MappedColumn["MonthlyTarget"] = relationship("MonthlyTarget", back_populates="details")
-    dealer: MappedColumn["Dealer"] = relationship("Dealer")
-    category: MappedColumn["Category"] = relationship("Category")
+    monthly_target: Mapped["MonthlyTarget"] = relationship("MonthlyTarget", back_populates="details")
+    dealer: Mapped["Dealer"] = relationship("Dealer")
+    category: Mapped["Category"] = relationship("Category")

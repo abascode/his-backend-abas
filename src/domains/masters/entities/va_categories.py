@@ -5,4 +5,4 @@ from sqlalchemy.orm import mapped_column, MappedColumn
 
 class Category(BaseModel):
     __tablename__ = "va_categories"
-    id: MappedColumn[str] = mapped_column(String, primary_key=True, nullable=False)
+    id: MappedColumn[str] = mapped_column(String(255), primary_key=True, nullable=False)
