@@ -1,23 +1,19 @@
 from src.shared.entities.basemodel import BaseModel
 
 # Master
-from src.domains.master.entities.va_categories import Category
-from src.domains.master.entities.va_dealer import Dealer
-from src.domains.master.entities.va_dealer_branch import DealerBranch
-from src.domains.master.entities.va_model import Model
-from src.domains.master.entities.va_segment import Segment
-from src.domains.master.entities.va_stock_pilot import StockPilot
-from src.domains.forecasts.entities.va_dealer_forecast import DealerForecast
-from src.domains.forecasts.entities.va_dealer_forecast_model import DealerForecastModel
-from src.domains.forecasts.entities.va_dealer_forecast_month import DealerForecastMonth
+from src.domains.masters.entities.va_categories import Category
+from src.domains.masters.entities.va_dealers import Dealer
+from src.domains.masters.entities.va_segments import Segment
+# from src.domains.masters.entities.va_stock_pilots import StockPilot
+from src.domains.masters.entities.va_models import Model
 
-from src.domains.calculation.entities.va_slot_calculation import SlotCalculation
-from src.domains.calculation.entities.va_slot_calculation_stock_pilot import (
-    SlotCalculationStockPilot,
-)
-from src.domains.calculation.entities.va_slot_calculation_model import (
-    SlotCalculationModel,
-)
-from src.domains.calculation.entities.va_slot_calculation_month import (
-    SlotCalculationMonth,
-)
+# Forecast
+from src.domains.forecasts.entities.va_forecasts import Forecast
+from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
+from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
+from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
+from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
+
+
+from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
+from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail

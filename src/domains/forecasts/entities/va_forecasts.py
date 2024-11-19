@@ -1,8 +1,35 @@
 from sqlalchemy import event
 
+from sqlalchemy import DateTime, Integer, String, func, text
 from src.shared.entities.basemodel import BaseModel
 from src.shared.utils.xid import generate_xid
 
+from sqlalchemy.orm import mapped_column, MappedColumn, relationship
+from datetime import datetime
 
 class Forecast(BaseModel):
-    pass
+    __tablename__ = "va_forecasts"
+    id: MappedColumn[str] = mapped_column(String, primary_key=True, nullable=False)
+    name: MappedColumn[str] = mapped_column(String, nullable=False)
+    month: MappedColumn[int] = mapped_column(String, nullable=False)
+    year: MappedColumn[int] = mapped_column(String, nullable=False)
+    confirmed_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    
+    
+    created_by: MappedColumn[str] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    updated_by: MappedColumn[str] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    deleted_by: MappedColumn[str] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    created_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
+    
+    details: MappedColumn["ForecastDetail"] = relationship("ForecastDetail", back_populates="forecast")
