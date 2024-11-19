@@ -1,7 +1,9 @@
 import abc
+from typing import List
 
 from starlette.requests import Request
 
+from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.models.requests.forecast_request import CreateForecastRequest
 
@@ -24,5 +26,7 @@ class IForecastRepository:
         pass
 
     @abc.abstractmethod
-    def get_va_db(self, request: Request) -> None:
+    def bulk_create_forecast_detail(
+        self, request: Request, forecast_details: List[ForecastDetail]
+    ) -> None:
         pass

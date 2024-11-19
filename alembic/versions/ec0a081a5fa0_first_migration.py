@@ -1,8 +1,8 @@
-"""init_migrations
+"""first_migration
 
-Revision ID: 81109be96796
+Revision ID: ec0a081a5fa0
 Revises: 
-Create Date: 2024-11-19 11:49:03.587987
+Create Date: 2024-11-19 11:55:34.434059
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '81109be96796'
+revision: str = 'ec0a081a5fa0'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -29,20 +29,6 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('va_forecasts',
-    sa.Column('id', sa.String(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('month', sa.String(), nullable=False),
-    sa.Column('year', sa.String(), nullable=False),
-    sa.Column('confirmed_at', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('created_by', sa.String(length=255), nullable=True),
-    sa.Column('updated_by', sa.String(length=255), nullable=True),
-    sa.Column('deleted_by', sa.String(length=255), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('deletable', sa.Integer(), server_default=sa.text('0'), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('va_monthly_targets',
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('month', sa.String(), nullable=False),
@@ -57,6 +43,22 @@ def upgrade() -> None:
     )
     op.create_table('va_segments',
     sa.Column('id', sa.String(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('va_forecasts',
+    sa.Column('id', sa.String(length=255), nullable=False),
+    sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('month', sa.Integer(), nullable=False),
+    sa.Column('year', sa.Integer(), nullable=False),
+    sa.Column('dealer_id', sa.String(length=255), nullable=False),
+    sa.Column('confirmed_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('created_by', sa.String(length=255), nullable=True),
+    sa.Column('updated_by', sa.String(length=255), nullable=True),
+    sa.Column('deleted_by', sa.String(length=255), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('deletable', sa.Integer(), server_default=sa.text('0'), nullable=False),
+    sa.ForeignKeyConstraint(['dealer_id'], ['va_dealers.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('va_models',
@@ -146,9 +148,9 @@ def downgrade() -> None:
     op.drop_table('va_forecast_details')
     op.drop_table('va_monthly_target_details')
     op.drop_table('va_models')
+    op.drop_table('va_forecasts')
     op.drop_table('va_segments')
     op.drop_table('va_monthly_targets')
-    op.drop_table('va_forecasts')
     op.drop_table('va_dealers')
     op.drop_table('va_categories')
     # ### end Alembic commands ###
