@@ -18,5 +18,7 @@ class Model(BaseModel):
     )
     usage: MappedColumn[str] = mapped_column(String(255))
     euro: MappedColumn[str] = mapped_column(String(255))
-    category: MappedColumn['Category'] = relationship("Category")
-    segment :MappedColumn['Segment'] = relationship("Segment")
+    category: Mapped['Category'] = relationship("Category")
+    segment: Mapped['Segment'] = relationship("Segment")
+    
+    forecast_details: Mapped['ForecastDetail'] = relationship("ForecastDetail", back_populates="model")
