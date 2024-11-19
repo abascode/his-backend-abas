@@ -52,9 +52,9 @@ class ForecastUseCase(IForecastUseCase):
             forecast.year = create_forecast_request.year
             forecast.month = create_forecast_request.month
 
-            for i in create_forecast_request.details:
-                if i
+            # for i in create_forecast_request.details:
+            #     # if i
 
         commit(request, Database.VEHICLE_ALLOCATION)
 
-    def convert_n_to_months(self, request: Request, detail: dict) -> List[ForecastDetail]:
+    # def convert_n_to_months(self, request: Request, detail: dict) -> List[ForecastDetail]:

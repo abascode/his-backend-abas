@@ -11,7 +11,12 @@ from src.models.responses.basic_response import TextValueResponse
 class IMasterUseCase:
 
     @abc.abstractmethod
-    def get_dealer_options(self, request:Request, search: str | None = None
+    def get_dealer_options(self, request:Request, search: str
+    ) -> List[TextValueResponse]:
+        pass
+
+    @abc.abstractmethod
+    def get_model_options(self, request:Request, search: str
     ) -> List[TextValueResponse]:
         pass
 
@@ -27,5 +32,9 @@ class IMasterRepository:
         pass
 
     @abc.abstractmethod
-    def get_dealer_options(self, request: Request, search: str | None = None) -> List[Dealer]:
+    def get_dealer_options(self, request: Request, search: str) -> List[Dealer]:
+        pass
+
+    @abc.abstractmethod
+    def get_model_options(self, request: Request, search: str) -> List[Model]:
         pass

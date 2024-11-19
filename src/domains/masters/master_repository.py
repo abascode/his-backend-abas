@@ -34,12 +34,22 @@ class MasterRepository(IMasterRepository):
             temp.name = dealer.name
         return dealer
 
-    def get_dealer_options(self, request: Request, search: str | None = None) -> List[Dealer]:
+    def get_dealer_options(self, request: Request, search: str) -> List[Dealer]:
         dealer = (
             self.get_va_db(request)
             .query(Dealer)
-            .filter(Dealer.name == search)
+            .filter(Dealer.name.ilike("%" + search + "%"))
             .all()
         )
         if dealer is not None:
             return dealer
+
+    def get_model_options(self, request: Request, search: str) -> List[Model]:
+        model = (
+            self.get_va_db(request)
+            .query(Model)
+            .filter(Model.id.ilike("%" + search + "%"))
+            .all()
+        )
+        if model is not None:
+            return model

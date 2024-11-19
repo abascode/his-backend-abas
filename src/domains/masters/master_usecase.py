@@ -36,3 +36,19 @@ class MasterUseCase(IMasterUseCase):
 
         ]
 
+    def get_model_options(
+            self,
+            request: Request,
+            search: str | None = None
+    ) -> List[TextValueResponse]:
+        models = self.master_repo.get_model_options(request,search)
+
+        return [
+            TextValueResponse(
+                text=i.manufacture_code,
+                value = i.id,
+            )
+            for i in models
+
+        ]
+

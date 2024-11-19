@@ -1,5 +1,4 @@
-from fastapi import APIRouter
-from fastapi.params import Depends
+from fastapi import APIRouter, Depends
 from starlette.requests import Request
 
 from src.domains.masters.master_interface import IMasterUseCase
@@ -19,5 +18,19 @@ def get_dealer_options(
     search: str | None = "",
     dealer_uc: IMasterUseCase = Depends(MasterUseCase),
 )->ListResponse[TextValueResponse]:
-    data = dealer_uc.get_dealer_options(request,search)
-    return ListResponse(data=data, message="Success Fetching Dealer Options")
+    dealers = dealer_uc.get_dealer_options(request,search)
+    return ListResponse(data=dealers, message="Success Fetching Dealer Options")
+
+@router.get(
+    "/models/options",
+    response_model= ListResponse[TextValueResponse],
+    summary="Model Options",
+    description="Model Options",
+)
+def get_model_options(
+    request: Request,
+    search: str | None = "",
+    model_uc: IMasterUseCase = Depends(MasterUseCase),
+)->ListResponse[TextValueResponse]:
+    models = model_uc.get_model_options(request,search)
+    return ListResponse(data=models, message="Success Fetching Model Options")
