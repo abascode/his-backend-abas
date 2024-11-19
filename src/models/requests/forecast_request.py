@@ -17,3 +17,9 @@ class CreateForecastRequest(BaseModel):
 
 class GetForecastSummaryRequest(TableRequest, BaseModel):
     pass
+
+
+class GetForecastDetailRequest(BaseModel):
+    month: int
+    year: int
+    dealer_id: str

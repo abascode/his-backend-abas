@@ -27,13 +27,29 @@ class ForecastRepository(IForecastRepository):
         self.get_va_db(request).add(forecast)
         self.get_va_db(request).flush()
 
-    def find_forecast(self, request: Request, forecast_id: str) -> Forecast | None:
-        return (
-            self.get_va_db(request)
-            .query(Forecast)
-            .filter(Forecast.id == forecast_id)
-            .first()
-        )
+    def find_forecast(
+        self,
+        request: Request,
+        forecast_id: str = None,
+        dealer_id: str = None,
+        month: int = None,
+        year: int = None,
+    ) -> Forecast | None:
+        query = self.get_va_db(request).query(Forecast).filter(Forecast.deletable == 0)
+
+        if forecast_id is not None:
+            query = query.filter(Forecast.id == forecast_id)
+
+        if dealer_id is not None:
+            query = query.filter(Forecast.dealer_id == dealer_id)
+
+        if month is not None:
+            query = query.filter(Forecast.month == month)
+
+        if year is not None:
+            query = query.filter(Forecast.year == year)
+
+        return query.first()
 
     def create_forecast_detail(
         self, request: Request, forecast_detail: ForecastDetail
@@ -74,3 +90,16 @@ class ForecastRepository(IForecastRepository):
             )
             for year, month, dealer_submit, remaining_dealer_submit, order_confirmation in res
         ], cnt
+
+    def find_forecast_detail(
+        self, request: Request, month: int, year: int, dealer_id: str
+    ) -> ForecastDetail | None:
+        return (
+            self.get_va_db(request)
+            .query(ForecastDetail)
+            .filter(
+                ForecastDetail.forecast.month == month,
+                ForecastDetail.forecast.year == year,
+                ForecastDetail.dealer_id,
+            )
+        )

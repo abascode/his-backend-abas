@@ -8,6 +8,7 @@ from src.domains.forecasts.forecast_usecase import ForecastUseCase
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
+    GetForecastDetailRequest,
 )
 from src.models.responses.basic_response import (
     BasicResponse,
@@ -59,3 +60,14 @@ def get_forecast_summaries(
         ),
         message="Success getting summaries",
     )
+
+
+@router.get("")
+def get_forecast_detail(
+    request: Request,
+    get_forecast_detail_request: GetForecastDetailRequest = Depends(),
+    forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
+):
+    res = forecast_uc.get_forecast_detail(request, get_forecast_detail_request)
+
+    return BasicResponse(data=res, message="Success getting forecast detail")

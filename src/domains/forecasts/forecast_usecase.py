@@ -19,13 +19,21 @@ from src.domains.masters.master_repository import MasterRepository
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
+    GetForecastDetailRequest,
 )
-from src.models.responses.forecast_response import GetForecastSummaryResponse
+from src.models.responses.basic_response import TextValueResponse
+from src.models.responses.forecast_response import (
+    GetForecastSummaryResponse,
+    GetForecastResponse,
+    GetForecastDetailResponse,
+    GetForecastDetailMonthResponse,
+)
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
 
 
 class ForecastUseCase(IForecastUseCase):
+
     def __init__(
         self,
         forecast_repo: IForecastRepository = Depends(ForecastRepository),
@@ -213,4 +221,53 @@ class ForecastUseCase(IForecastUseCase):
             end_stock=detail["end_stock"],
             id=detail["dealer_forecast_id"],
             months=[i for i in months_map.values()],
+        )
+
+    def get_forecast_detail(
+        self, request: Request, get_forecast_detail_request: GetForecastDetailRequest
+    ) -> GetForecastResponse:
+        data = self.forecast_repo.find_forecast(
+            request,
+            month=get_forecast_detail_request.month,
+            year=get_forecast_detail_request.year,
+            dealer_id=get_forecast_detail_request.dealer_id,
+        )
+
+        if data is None:
+            raise HTTPException(
+                status_code=http.HTTPStatus.NOT_FOUND, detail="Forecast is not found"
+            )
+
+        models: List[GetForecastDetailResponse] = []
+
+        for i in data.details:
+            months = []
+
+            for j in i.months:
+                months.append(
+                    GetForecastDetailMonthResponse(
+                        forecast_month=j.forecast_month,
+                        total_rs=j.total_rs,
+                        total_ws=j.total_ws,
+                        final_allocation=0,
+                    )
+                )
+
+            models.append(
+                GetForecastDetailResponse(
+                    id=i.id,
+                    model=TextValueResponse(
+                        text=i.model.id,
+                        value=i.model.id,
+                    ),
+                    months=months,
+                )
+            )
+
+        return GetForecastResponse(
+            id=data.id,
+            month=data.month,
+            year=data.year,
+            dealer=TextValueResponse(text=data.dealer.name, value=data.dealer.id),
+            models=models,
         )

@@ -9,8 +9,12 @@ from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
+    GetForecastDetailRequest,
 )
-from src.models.responses.forecast_response import GetForecastSummaryResponse
+from src.models.responses.forecast_response import (
+    GetForecastSummaryResponse,
+    GetForecastResponse,
+)
 
 
 class IForecastUseCase:
@@ -26,6 +30,12 @@ class IForecastUseCase:
     ) -> tuple[List[GetForecastSummaryResponse], int]:
         pass
 
+    @abc.abstractmethod
+    def get_forecast_detail(
+        self, request: Request, get_forecast_detail_request: GetForecastDetailRequest
+    ) -> GetForecastResponse:
+        pass
+
 
 class IForecastRepository:
     @abc.abstractmethod
@@ -33,7 +43,14 @@ class IForecastRepository:
         pass
 
     @abc.abstractmethod
-    def find_forecast(self, request: Request, forecast_id: str) -> Forecast | None:
+    def find_forecast(
+        self,
+        request: Request,
+        forecast_id: str,
+        dealer_id: str = None,
+        month: int = None,
+        year: int = None,
+    ) -> Forecast | None:
         pass
 
     @abc.abstractmethod
