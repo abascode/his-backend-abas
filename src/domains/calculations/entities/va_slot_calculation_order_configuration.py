@@ -10,15 +10,13 @@ class SlotCalculationOrderConfiguration(BaseModel):
     __tablename__ = "va_slot_calculation_order_configurations"
     
     slot_calculation_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_slot_calculations.id"), primary_key=True,nullable=False
+        String(255), ForeignKey("va_slot_calculations.id", onupdate="CASCADE"), primary_key=True,nullable=False
     )
     category_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_categories.id"), primary_key=True,nullable=False
+        String(255), ForeignKey("va_categories.id", onupdate="CASCADE"), primary_key=True,nullable=False
     )
     forecast_percentage: MappedColumn[int] = mapped_column(Integer, nullable=False)
     urgent_percentage: MappedColumn[int] = mapped_column(Integer, nullable=False)
-    
-    
     
     created_by: MappedColumn[str] = mapped_column(
         String(255),

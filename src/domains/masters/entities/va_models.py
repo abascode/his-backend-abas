@@ -10,13 +10,13 @@ class Model(BaseModel):
     __tablename__ = "va_models"
     id: MappedColumn[str] = mapped_column(String(255), primary_key=True)
     manufacture_code: MappedColumn[str] = mapped_column(String(255))
-    group: MappedColumn[str] = mapped_column(String(255))
-    variant: MappedColumn[str] = mapped_column(String(255))
+    group: MappedColumn[str] = mapped_column(String(255), nullable=False)
+    variant: MappedColumn[str] = mapped_column(String(255), nullable=False)
     category_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_categories.id")
+        String(255), ForeignKey("va_categories.id", onupdate="CASCADE")
     )
     segment_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_segments.id")
+        String(255), ForeignKey("va_segments.id", onupdate="CASCADE")
     )
     usage: MappedColumn[str] = mapped_column(String(255))
     euro: MappedColumn[str] = mapped_column(String(255))
