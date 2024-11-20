@@ -9,8 +9,9 @@ from src.shared.utils.xid import generate_xid
 class SlotCalculationDetail(BaseModel):
     __tablename__ = "va_slot_calculation_details"
     
+    id: MappedColumn[str] = mapped_column(String(255), primary_key=True, nullable=False)
     slot_calculation_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_slot_calculations.id"), primary_key=True,nullable=False
+        String(255), ForeignKey("va_slot_calculations.id"),nullable=False
     )
     forecast_month: MappedColumn[int] = mapped_column(Integer, nullable=False)
     model_id: MappedColumn[str] = mapped_column(
@@ -43,7 +44,9 @@ class SlotCalculationDetail(BaseModel):
     )
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
     
-    slot_calculation: Mapped["SlotCalculation"] = relationship("SlotCalculation", back_populates="details")
+    slot_calculation: Mapped["SlotCalculation"] = relationship(
+        "SlotCalculation"
+    )
     model: Mapped["Model"] = relationship("Model")
     
 @event.listens_for(SlotCalculationDetail, "before_insert")

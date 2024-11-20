@@ -17,7 +17,6 @@ NUM_MONTHS = {
     12: "December",
 }
 
-
 def convert_to_local_time(utc_dt: datetime) -> datetime:
     local_tz = pytz.timezone("Asia/Jakarta")
     local_dt = utc_dt.astimezone(local_tz)
@@ -33,3 +32,12 @@ def get_end_of_date(utc_dt: datetime) -> datetime:
 def convert_number_to_month(month_number: int) -> str:
     
     return NUM_MONTHS[month_number]
+
+def is_year_month(date_string: str) -> bool:
+    try:
+        datetime.strptime(date_string, "%Y-%m")
+        return True
+    except ValueError:
+        return False
+    
+

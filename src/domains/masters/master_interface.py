@@ -14,3 +14,7 @@ class IMasterRepository:
     @abc.abstractmethod
     def upsert_dealer(self, request: Request, dealer: Dealer) -> Dealer | None:
         pass
+    
+    @abc.abstractmethod
+    def find_model_by_variant(self, request: Request, variant: str) -> Model | None:
+        pass

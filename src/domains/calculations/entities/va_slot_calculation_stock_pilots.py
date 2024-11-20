@@ -38,7 +38,7 @@ class SlotCalculationStockPilot(BaseModel):
     )
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
     
-    slot_calculation: Mapped["SlotCalculation"] = relationship("SlotCalculation", back_populates="stock_pilots")
+    slot_calculation: Mapped["SlotCalculation"] = relationship("SlotCalculation")
     segment: Mapped["Segment"] = relationship("Segment")
     
 @event.listens_for(SlotCalculationStockPilot, "before_insert")
