@@ -24,6 +24,15 @@ class CalculationUseCase(ICalculationUseCase):
     def __init__(self, calculation_repo: ICalculationRepository = Depends(CalculationRepository),master_repository: IMasterRepository = Depends(MasterRepository)):
         self.calculation_repo = calculation_repo
         self.master_repository = master_repository
+        
+    def upsert_bo_soa_oc_booking_prospect(self, request, bo_soa_oc_booking_prospect_data: UploadFile, month: int, year: int):
+        begin_transaction(request, Database.VEHICLE_ALLOCATION)
+        
+        slot_calculation = self.calculation_repo.find_calculation(request, month=month, year=year)
+        
+        is_create = slot_calculation.details is None or len(slot_calculation.details) == 0
+        
+        pass
             
     
     # Need to be refactored

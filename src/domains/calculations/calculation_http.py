@@ -39,3 +39,19 @@ def upsert_take_off_data(
     calculation_uc.upsert_take_off_data(request, take_off_data, month, year)
 
     return NoDataResponse(message="Success uploading take off data!")
+
+@router.post(
+    # temporary
+    "/booking",
+    response_model=NoDataResponse,
+    summary="Upsert slot calculation SOA, BO",
+    description="Upsert slot calculation take off data",
+)
+def upsert_soa_bo_oc_booking_data(
+    request: Request,
+    bo_soa_oc_booking_prospect_data: UploadFile,
+    month: int = Form(...),
+    year: int = Form(...),
+    calculation_uc: ICalculationUseCase = Depends(CalculationUseCase),
+) -> NoDataResponse:
+    calculation_uc.upsert_bo_soa_oc_booking_prospect(request, bo_soa_oc_booking_prospect_data, month, year)
