@@ -25,6 +25,7 @@ class CalculationUseCase(ICalculationUseCase):
         self.calculation_repo = calculation_repo
         self.master_repository = master_repository
         
+    #TODO : waiting template finalization
     def upsert_bo_soa_oc_booking_prospect(self, request, bo_soa_oc_booking_prospect_data: UploadFile, month: int, year: int):
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
         
@@ -34,10 +35,7 @@ class CalculationUseCase(ICalculationUseCase):
         
         pass
             
-    
-    # Need to be refactored
     def upsert_take_off_data(self,request: Request, take_off_data: UploadFile, month: int, year: int) -> None:
-        
         
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
         
@@ -69,32 +67,12 @@ class CalculationUseCase(ICalculationUseCase):
         MODEL_NAME_COLUMN_NAME = "Sales Name"
         
     
-        model_names = []
         model_name_column = None
         
         for cell in worksheet[HEADER_ROW_LOCATION]:
             if cell.value == MODEL_NAME_COLUMN_NAME:
                 model_name_column = cell.column
                 break
-            
-        for row in worksheet.iter_rows(min_row=HEADER_ROW_LOCATION + 1, max_row=worksheet.max_row):
-            model_name = row[model_name_column - 1].value
-            model_names.append(model_name)
-            
-        if model_name_column is None:
-            raise HTTPException(
-                status_code=http.HTTPStatus.BAD_REQUEST,
-                detail=f"Model name column is not found!"
-            )
-    
-        for model in model_names:
-            model_detail = self.master_repository.find_model_by_variant(request, model)
-            
-            if model_detail is None:
-                raise HTTPException(
-                    status_code=http.HTTPStatus.BAD_REQUEST,
-                    detail=f"Model: {model} is not found!"
-                )
                 
         new_calculation_details: List[SlotCalculationDetail] = []
         
@@ -110,7 +88,12 @@ class CalculationUseCase(ICalculationUseCase):
             for column_index, header_name in forecast_month_headers:
                 take_off_value = row[column_index - 1].value
                 model_detail = self.master_repository.find_model_by_variant(request, model_name)
-                __, month = header_name.split("-")
+                if model_detail is None:
+                    raise HTTPException(
+                        status_code=http.HTTPStatus.NOT_FOUND,
+                        detail=f"Model {model_name} is not found",
+                    )
+                year, month = header_name.split("-")
                 
                 slot_calculation_detail = SlotCalculationDetail(
                     slot_calculation_id = slot_calculation.id,
@@ -127,10 +110,6 @@ class CalculationUseCase(ICalculationUseCase):
             for calculation_detail in new_calculation_details:
                 self.calculation_repo.create_calculation_detail(request, calculation_detail)
         else:
-            # problems
-            # what if its different lenght?
-            # what to do with the outdated or not used?
-            # change soon, only covers if the length and month are the same
             current_details = slot_calculation.details
             
             for i in range(len(new_calculation_details)):
