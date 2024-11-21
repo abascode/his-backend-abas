@@ -14,6 +14,7 @@ from src.domains.masters.master_repository import MasterRepository
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
 from src.shared.utils.date import is_year_month
+from src.shared.utils.excel import get_header_column_index, get_worksheet, open_excel_workbook
 from src.shared.utils.file_utils import clear_directory, get_file_extension, save_upload_file
 from src.shared.utils.xid import generate_xid
 from pathlib import Path
@@ -60,20 +61,20 @@ class CalculationUseCase(ICalculationUseCase):
         
         save_upload_file(take_off_data, file_path)
         
-        workbook = openpyxl.load_workbook(file_path)
-        worksheet = workbook.active
+        workbook = open_excel_workbook(file_path)
+        worksheet = get_worksheet(workbook=workbook)
         
         HEADER_ROW_LOCATION = 1
         MODEL_NAME_COLUMN_NAME = "Sales Name"
         
     
-        model_name_column = None
+        model_name_column_index = get_header_column_index(worksheet, MODEL_NAME_COLUMN_NAME, HEADER_ROW_LOCATION)
         
-        for cell in worksheet[HEADER_ROW_LOCATION]:
-            if cell.value == MODEL_NAME_COLUMN_NAME:
-                model_name_column = cell.column
-                break
-                
+        if model_name_column_index is None:
+            raise HTTPException(
+                status_code=http.HTTPStatus.BAD_REQUEST,
+                detail=f"Column {MODEL_NAME_COLUMN_NAME} is not found",
+            )        
         new_calculation_details: List[SlotCalculationDetail] = []
         
     
@@ -83,17 +84,18 @@ class CalculationUseCase(ICalculationUseCase):
         ]
         
         for row in worksheet.iter_rows(min_row=HEADER_ROW_LOCATION + 1, max_row=worksheet.max_row):
-            model_name = row[model_name_column - 1].value
+            model_name = row[model_name_column_index - 1].value
+            model_detail = self.master_repository.find_model_by_variant(request, model_name)
+            if model_detail is None:
+                raise HTTPException(
+                    status_code=http.HTTPStatus.NOT_FOUND,
+                    detail=f"Model {model_name} is not found",
+                )
 
             for column_index, header_name in forecast_month_headers:
                 take_off_value = row[column_index - 1].value
-                model_detail = self.master_repository.find_model_by_variant(request, model_name)
-                if model_detail is None:
-                    raise HTTPException(
-                        status_code=http.HTTPStatus.NOT_FOUND,
-                        detail=f"Model {model_name} is not found",
-                    )
-                year, month = header_name.split("-")
+                
+                _, month = header_name.split("-")
                 
                 slot_calculation_detail = SlotCalculationDetail(
                     slot_calculation_id = slot_calculation.id,

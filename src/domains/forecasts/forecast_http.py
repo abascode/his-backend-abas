@@ -1,6 +1,6 @@
 import math
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from starlette.requests import Request
 
 from src.domains.forecasts.forecast_interface import IForecastUseCase
@@ -71,3 +71,21 @@ def get_forecast_detail(
     res = forecast_uc.get_forecast_detail(request, get_forecast_detail_request)
 
     return BasicResponse(data=res, message="Success getting forecast detail")
+
+
+@router.post(
+    "/monthly-target",
+    response_model=NoDataResponse,
+    summary="Upsert Monthly Target",
+    description="Upsert Monthly Target",
+)
+def upsert_monthly_target(
+    request: Request,
+    monthly_target_data: UploadFile = File(...),
+    month: int = Form(...),
+    year: int = Form(...),
+    forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
+) -> NoDataResponse:
+    forecast_uc.upsert_monthly_target(request, monthly_target_data, month, year)
+
+    return NoDataResponse(message="Success Upserting Monthly Target")

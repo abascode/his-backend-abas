@@ -1,4 +1,6 @@
 
+from typing import List
+from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.shared.entities.basemodel import BaseModel
 from src.shared.entities.basemodel import BaseModel
 
@@ -31,7 +33,7 @@ class MonthlyTarget(BaseModel):
     updated_at: MappedColumn[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
     
-    details: Mapped["MonthlyTargetDetail"] = relationship("MonthlyTargetDetail", back_populates="monthly_target")
+    details: Mapped[List[MonthlyTargetDetail]] = relationship(MonthlyTargetDetail, back_populates="monthly_target")
     
 @event.listens_for(MonthlyTarget, "before_insert")
 def before_insert(mapper, connection, target: MonthlyTarget):

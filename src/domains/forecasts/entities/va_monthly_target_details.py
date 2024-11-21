@@ -2,16 +2,18 @@
 from src.shared.entities.basemodel import BaseModel
 from src.shared.entities.basemodel import BaseModel
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, func, text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func, text, event
 from src.shared.entities.basemodel import BaseModel
 from sqlalchemy.orm import mapped_column, MappedColumn, relationship, Mapped
 from datetime import datetime
 
+from src.shared.utils.xid import generate_xid
+
 class MonthlyTargetDetail(BaseModel):
     __tablename__ = "va_monthly_target_details"
-    month_target_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_monthly_targets.id", onupdate="CASCADE"),primary_key=True, nullable=False)
-    forecast_month: MappedColumn[int] = mapped_column(String, nullable=False)
-    dealer_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_dealers.id", onupdate="CASCADE"),nullable=False)
+    month_target_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_monthly_targets.id", onupdate="CASCADE"), primary_key=True, nullable=False)
+    forecast_month: MappedColumn[int] = mapped_column(String, primary_key=True,nullable=False)
+    dealer_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_dealers.id", onupdate="CASCADE"),primary_key=True,nullable=False)
     target: MappedColumn[int] = mapped_column(Integer, nullable=False)
     category_id: MappedColumn[str] = mapped_column(String, ForeignKey("va_categories.id", onupdate="CASCADE"),nullable=False)
     
@@ -34,3 +36,12 @@ class MonthlyTargetDetail(BaseModel):
     monthly_target: Mapped["MonthlyTarget"] = relationship("MonthlyTarget", back_populates="details")
     dealer: Mapped["Dealer"] = relationship("Dealer")
     category: Mapped["Category"] = relationship("Category")
+    
+@event.listens_for(MonthlyTargetDetail, "before_insert")
+def before_insert(mapper, connection, target: MonthlyTargetDetail):
+    target.created_at = datetime.now()
+
+
+@event.listens_for(MonthlyTargetDetail, "before_update")
+def before_update(mapper, connection, target: MonthlyTargetDetail):
+    target.updated_at = datetime.now()

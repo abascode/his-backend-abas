@@ -1,11 +1,14 @@
 import abc
 from typing import List
 
+from fastapi import UploadFile
 from starlette.requests import Request
 
 from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
+from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
+from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
@@ -35,6 +38,10 @@ class IForecastUseCase:
         self, request: Request, get_forecast_detail_request: GetForecastDetailRequest
     ) -> GetForecastResponse:
         pass
+    
+    @abc.abstractmethod
+    def upsert_monthly_target(self, request: Request, monthly_target_data: UploadFile, month: int, year: int) -> None:
+        pass
 
 
 class IForecastRepository:
@@ -51,6 +58,16 @@ class IForecastRepository:
         month: int = None,
         year: int = None,
     ) -> Forecast | None:
+        pass
+    
+    @abc.abstractmethod
+    def find_monthly_target(
+        self,
+        request: Request,
+        monthly_target_id: str = None,
+        month: int = None,
+        year: int = None,
+    ) -> MonthlyTarget | None:
         pass
 
     @abc.abstractmethod
@@ -70,3 +87,11 @@ class IForecastRepository:
         self, request: Request, query: GetForecastSummaryRequest
     ) -> tuple[List[GetForecastSummaryResponse], int]:
         pass
+    
+    def create_monthly_target(self, request: Request, monthly_target: MonthlyTarget) -> MonthlyTarget:
+        pass
+    
+    def create_monthly_target_detail(self, request: Request, monthly_target_detail: MonthlyTargetDetail) -> MonthlyTargetDetail:
+        pass
+    
+    
