@@ -181,7 +181,7 @@ def upgrade() -> None:
     sa.Column('deletable', sa.Integer(), server_default=sa.text('0'), nullable=False),
     sa.ForeignKeyConstraint(['model_id'], ['va_models.id'], onupdate='CASCADE'),
     sa.ForeignKeyConstraint(['slot_calculation_id'], ['va_slot_calculations.id'], onupdate='CASCADE'),
-    sa.PrimaryKeyConstraint('slot_calculation_id')
+    sa.PrimaryKeyConstraint('slot_calculation_id', 'forecast_month', 'model_id')
     )
     op.create_table('va_forecast_detail_months',
     sa.Column('id', sa.String(length=255), nullable=False),

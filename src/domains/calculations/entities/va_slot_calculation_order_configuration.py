@@ -38,7 +38,7 @@ class SlotCalculationOrderConfiguration(BaseModel):
     )
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
     
-    slot_calculation: Mapped["SlotCalculation"] = relationship("SlotCalculation", back_populates="stock_pilots")
+    slot_calculation: Mapped["SlotCalculation"] = relationship("SlotCalculation")
     category: Mapped["Category"] = relationship("Category")
     
 @event.listens_for(SlotCalculationOrderConfiguration, "before_insert")

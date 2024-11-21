@@ -1,5 +1,8 @@
 
 from datetime import datetime
+from typing import List
+from src.domains.calculations.entities.va_slot_calculation_details import SlotCalculationDetail
+from src.domains.calculations.entities.va_slot_calculation_stock_pilots import SlotCalculationStockPilot
 from src.shared.entities.basemodel import BaseModel
 from sqlalchemy.orm import MappedColumn, mapped_column, Mapped, relationship
 from sqlalchemy import DateTime, Integer, String, func, text, event
@@ -34,9 +37,10 @@ class SlotCalculation(BaseModel):
     )
     deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))
     
-    details: Mapped['SlotCalculationDetail'] = relationship("SlotCalculationDetail", back_populates="slot_calculation")
+    details: Mapped[List[SlotCalculationDetail]] = relationship(
+        SlotCalculationDetail, back_populates="slot_calculation")
     
-    stock_pilots: Mapped['SlotCalculationStockPilot'] = relationship("SlotCalculationStockPilot", back_populates="slot_calculation") 
+    stock_pilots: Mapped[SlotCalculationStockPilot] = relationship(SlotCalculationStockPilot, back_populates="slot_calculation") 
     
 @event.listens_for(SlotCalculation, "before_insert")
 def before_insert(mapper, connection, target: SlotCalculation):

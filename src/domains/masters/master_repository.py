@@ -20,6 +20,10 @@ class MasterRepository(IMasterRepository):
         return (
             request.state.va_db if request.state.va_db is not None else self.va_db
         )
+        
+    def find_model_by_variant(self, request: Request, variant: str) -> Model | None:
+        return self.get_va_db(request).query(Model).filter(Model.variant == variant).first()
+        
 
     def find_model(self, request: Request, model_id: str) -> Model | None:
         return self.get_va_db(request).query(Model).filter(Model.id == model_id).first()

@@ -14,6 +14,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from src.dependencies.database_dependency import get_va_db
 from src.domains.users.user_http import router as user_router
 from src.domains.forecasts.forecast_http import router as forecast_router
+from src.domains.calculations.calculation_http import router as calculation_router
+
 from src.domains.masters.master_http import router as master_router
 from src.shared.middlewares.database_middleware import DatabaseMiddleware
 from src.shared.utils.database_utils import rollback_all
@@ -111,4 +113,5 @@ def default():
 
 app.include_router(user_router)
 app.include_router(forecast_router)
+app.include_router(calculation_router)
 app.include_router(master_router)
