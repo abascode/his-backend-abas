@@ -13,10 +13,10 @@ class ForecastDetail(BaseModel):
     __tablename__ = "va_forecast_details"
     id: MappedColumn[str] = mapped_column(String(255), primary_key=True, nullable=False)
     forecast_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_forecasts.id"), nullable=False
+        String(255), ForeignKey("va_forecasts.id", onupdate="CASCADE"), nullable=False, 
     )
     model_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_models.id"), nullable=False
+        String(255), ForeignKey("va_models.id", onupdate="CASCADE"), nullable=False
     )
     end_stock: MappedColumn[int] = mapped_column(Integer, nullable=False)
     created_by: MappedColumn[str] = mapped_column(

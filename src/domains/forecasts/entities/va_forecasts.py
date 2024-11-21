@@ -17,7 +17,7 @@ class Forecast(BaseModel):
     month: MappedColumn[int] = mapped_column(Integer, nullable=False)
     year: MappedColumn[int] = mapped_column(Integer, nullable=False)
     dealer_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_dealers.id"), nullable=False
+        String(255), ForeignKey("va_dealers.id", onupdate="CASCADE"), nullable=False
     )
     confirmed_at: MappedColumn[datetime] = mapped_column(
         DateTime(timezone=True), nullable=True
