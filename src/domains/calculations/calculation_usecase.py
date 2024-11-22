@@ -11,6 +11,8 @@ from src.domains.calculations.entities.va_slot_calculation_details import SlotCa
 from src.domains.calculations.entities.va_slot_calculations import SlotCalculation
 from src.domains.masters.master_interface import IMasterRepository
 from src.domains.masters.master_repository import MasterRepository
+from src.models.responses.calculation_response import GetCalculationDetailResponse, GetCalculationResponse, GetCalculationStockPilotResponse
+from src.models.responses.master_response import CategoryResponse, ModelResponse, SegmentResponse
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
 from src.shared.utils.date import is_year_month
@@ -42,8 +44,7 @@ class CalculationUseCase(ICalculationUseCase):
         slot_calculation = self.calculation_repo.find_calculation(request, month=month, year=year)
         
         is_create = slot_calculation is None
-        
-        
+    
         if is_create:
             slot_calculation = SlotCalculation()
             slot_calculation.month = month
@@ -121,6 +122,72 @@ class CalculationUseCase(ICalculationUseCase):
         commit(request, Database.VEHICLE_ALLOCATION)
             
         clear_directory(Path(temp_storage_path))
+    
+    def get_calculation_detail(self, request, get_calculation_request)-> GetCalculationResponse | None:
+        slot_calculation = self.calculation_repo.find_calculation(request, month=get_calculation_request.month, year=get_calculation_request.year)
+        
+        if slot_calculation is None:
+            raise HTTPException(
+                status_code=http.HTTPStatus.NOT_FOUND,
+                detail="Calculation not found"
+            )
+            
+        details: List[GetCalculationDetailResponse] = []
+        
+        for i in range(len(slot_calculation.details)):
+            detail = slot_calculation.details[i]
+            category: CategoryResponse= CategoryResponse(
+                id=detail.model.category.id
+            )
+            
+            segment: SegmentResponse = SegmentResponse(
+                id=detail.model.segment.id
+            )
+            model: ModelResponse = ModelResponse(
+                id = detail.model.id,
+                manufacturer_code = detail.model.manufacture_code,
+                group = detail.model.group,
+                category = category,
+                segment = segment,
+                usage = detail.model.usage,
+                euro = detail.model.euro
+            )
+            details.append(
+                GetCalculationDetailResponse(
+                    model = model,
+                    forecast_month = detail.forecast_month,
+                    take_off = detail.take_off if detail.take_off is not None else 0,
+
+                    bo= detail.bo if detail.bo is not None else 0,
+                    soa= detail.soa if detail.soa is not None else 0,
+                    oc= detail.oc if detail.oc is not None else 0,
+                    booking_prospect= detail.booking_prospect if detail.booking_prospect is not None else 0
+                )
+            )
+            
+        stock_pilots: List[GetCalculationStockPilotResponse] = []
+        
+        for i in range(len(slot_calculation.stock_pilots)):
+            segment = SegmentResponse(
+                id = slot_calculation.stock_pilots[i].segment
+            )
+            
+            stock_pilots.append(
+                GetCalculationStockPilotResponse(
+                    segment = segment,
+                    percentage = slot_calculation.stock_pilots[i].percentage
+                )
+            )
+        
+        return GetCalculationResponse(
+            id = slot_calculation.id,
+            month = slot_calculation.month,
+            year = slot_calculation.year,
+            details = details,
+            stock_pilots = stock_pilots
+        )
+        
+        
         
         
         
