@@ -3,6 +3,7 @@ from typing import List
 
 from starlette.requests import Request
 
+from src.domains.masters.entities.va_categories import Category
 from src.domains.masters.entities.va_dealers import Dealer
 from src.domains.masters.entities.va_models import Model
 from src.domains.masters.entities.va_order_configurations import OrderConfiguration
@@ -46,6 +47,10 @@ class IMasterRepository:
         pass
     
     @abc.abstractmethod
+    def find_dealer_by_name(self, request: Request, name: str) -> Dealer | None:
+        pass
+    
+    @abc.abstractmethod
     def find_model_by_variant(self, request: Request, variant: str) -> Model | None:
         pass
 
@@ -63,4 +68,8 @@ class IMasterRepository:
 
     @abc.abstractmethod
     def get_stock_pilots(self, request: Request, month: int, year: int) -> List[StockPilot]:
+        pass
+    
+    @abc.abstractmethod
+    def find_category(self, request: Request, category_id: str) -> Category | None:
         pass

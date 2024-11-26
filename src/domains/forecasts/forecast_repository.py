@@ -9,6 +9,8 @@ from src.dependencies.database_dependency import get_va_db
 from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
+from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
+from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.forecast_interface import IForecastRepository
 from src.models.requests.forecast_request import GetForecastSummaryRequest
 from src.models.responses.forecast_response import GetForecastSummaryResponse
@@ -103,3 +105,33 @@ class ForecastRepository(IForecastRepository):
                 ForecastDetail.dealer_id,
             )
         )
+        
+    def find_monthly_target(
+        self,
+        request: Request,
+        monthly_target_id: str = None,
+        month: str = None,
+        year: int = None,
+    ) -> MonthlyTarget | None:
+        query = self.get_va_db(request).query(MonthlyTarget).filter(MonthlyTarget.deletable == 0)
+
+        if monthly_target_id is not None:
+            query = query.filter(MonthlyTarget.id == monthly_target_id)
+
+        if month is not None:
+            query = query.filter(MonthlyTarget.month == month)
+
+        if year is not None:
+            query = query.filter(MonthlyTarget.year == year)
+
+        return query.first()
+    
+    def create_monthly_target(self, request, monthly_target: MonthlyTarget) -> MonthlyTarget:
+        self.get_va_db(request).add(monthly_target)
+        self.get_va_db(request).flush()
+        
+        return monthly_target
+        
+    def create_monthly_target_detail(self, request, monthly_target_detail: MonthlyTargetDetail):
+        self.get_va_db(request).add(monthly_target_detail)
+        self.get_va_db(request).flush()

@@ -1,13 +1,18 @@
 import http
+import os
+from pathlib import Path
 import re
 from typing import List, Dict
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, UploadFile
+import openpyxl
 from starlette.requests import Request
 
 from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
+from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
+from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.forecast_interface import (
     IForecastUseCase,
     IForecastRepository,
@@ -30,6 +35,10 @@ from src.models.responses.forecast_response import (
 )
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
+from src.shared.utils.date import is_year_month
+from src.shared.utils.excel import get_header_column_index
+from src.shared.utils.file_utils import clear_directory, get_file_extension, save_upload_file
+from src.shared.utils.xid import generate_xid
 
 
 class ForecastUseCase(IForecastUseCase):
@@ -271,3 +280,139 @@ class ForecastUseCase(IForecastUseCase):
             dealer=TextValueResponse(text=data.dealer.name, value=data.dealer.id),
             models=models,
         )
+        
+    def convert_category_number_to_id(self, category: str) -> int:
+        CATEGORY_MAPPING = {
+            2: "CAT2",
+            3: "CAT3",
+        }
+        
+        return CATEGORY_MAPPING.get(category, None)
+        
+    def upsert_monthly_target(self, request, monthly_target_data: UploadFile, month: int, year: int):
+        begin_transaction(request, Database.VEHICLE_ALLOCATION)
+        
+        monthly_target = self.forecast_repo.find_monthly_target(request, month=month, year=year)
+    
+        is_create = monthly_target is None
+        
+        if is_create:
+            monthly_target = MonthlyTarget()
+            monthly_target.month = month
+            monthly_target.year = year
+            
+            monthly_target = self.forecast_repo.create_monthly_target(request, monthly_target)
+            
+        temp_storage_path = f"{os.getcwd()}/src/temp"
+        file_extension = get_file_extension(monthly_target_data)
+        unique_filename = f"{generate_xid()}.{file_extension}"
+            
+        file_path = Path(temp_storage_path) / unique_filename
+            
+        save_upload_file(monthly_target_data, file_path)
+            
+        workbook = openpyxl.load_workbook(file_path)
+        worksheet = workbook.active
+            
+        HEADER_ROW_LOCATION = 1
+        DEALER_PREFIX_COLUMN_NAME = "Dealer Name"
+        CATEGORY_COLUMN_NAME = "Category"
+            
+        dealer_prefix_column_index = get_header_column_index(
+            worksheet=worksheet,
+            header_name=DEALER_PREFIX_COLUMN_NAME,
+            header_row_index=HEADER_ROW_LOCATION,
+        )   
+            
+        if dealer_prefix_column_index is None:
+            raise HTTPException(
+                status_code=http.HTTPStatus.BAD_REQUEST,
+                 detail=f"Dealer prefix column not found in {DEALER_PREFIX_COLUMN_NAME}",
+            )    
+        
+        category_column_index = get_header_column_index(
+            worksheet=worksheet,
+            header_name=CATEGORY_COLUMN_NAME,
+            header_row_index=HEADER_ROW_LOCATION,
+        )       
+            
+            
+        if category_column_index is None:
+            raise HTTPException(
+                status_code=http.HTTPStatus.BAD_REQUEST,
+                detail=f"Monthly target category column not found in {CATEGORY_COLUMN_NAME}",
+            )    
+                
+        new_monthly_target_details: List[MonthlyTargetDetail] = []
+            
+        forecast_month_headers = [
+            (cell.column,cell.value) for cell in worksheet[HEADER_ROW_LOCATION]
+            if is_year_month(cell.value)
+        ]
+            
+        for row in worksheet.iter_rows(min_row=HEADER_ROW_LOCATION + 1, max_row=worksheet.max_row):
+            dealer_prefix = row[dealer_prefix_column_index - 1].value
+            
+            dealer = self.master_repo.find_dealer_by_name(request, dealer_prefix)
+            
+            if dealer is None:
+                raise HTTPException(
+                    status_code=http.HTTPStatus.NOT_FOUND,
+                    detail=f"Dealer {dealer_prefix} is not found",
+                )
+            
+            category_number = row[category_column_index - 1].value
+            converted_category = self.convert_category_number_to_id(category_number)
+            
+            if converted_category is None:
+                raise HTTPException(
+                    status_code=http.HTTPStatus.BAD_REQUEST,
+                    detail=f"Category number {category_number} is not found",
+                )
+                
+            category = self.master_repo.find_category(request, converted_category)
+            
+            if category is None:
+                raise HTTPException(
+                    status_code=http.HTTPStatus.NOT_FOUND,
+                    detail=f"Category {converted_category} is not found",
+                )
+            
+
+            for column_index, header_name in forecast_month_headers:
+                target_value = row[column_index - 1].value
+                
+                _, month = header_name.split("-")
+                
+                monthly_target_detail = MonthlyTargetDetail(
+                    month_target_id = monthly_target.id,
+                    forecast_month = month,
+                    dealer_id = dealer.id,
+                    target = target_value,
+                    category_id= category.id,
+                )
+                
+                new_monthly_target_details.append(
+                    monthly_target_detail
+                )
+        
+        if is_create:
+            for monthly_target_detail in new_monthly_target_details:
+                self.forecast_repo.create_monthly_target_detail(request, monthly_target_detail)
+        else:
+            current_details = monthly_target.details
+            
+            for i in range(len(new_monthly_target_details)):
+                current_details[i].target = new_monthly_target_details[i].target
+                current_details[i].category_id = new_monthly_target_details[i].category_id
+                current_details[i].forecast_month = new_monthly_target_details[i].forecast_month
+                current_details[i].dealer_id = new_monthly_target_details[i].dealer_id
+                
+                self.forecast_repo.create_monthly_target_detail(request, current_details[i])
+        
+        commit(request, Database.VEHICLE_ALLOCATION)
+        
+        clear_directory(Path(temp_storage_path))
+        
+        
+        

@@ -101,7 +101,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['category_id'], ['va_categories.id'], onupdate='CASCADE'),
     sa.ForeignKeyConstraint(['dealer_id'], ['va_dealers.id'], onupdate='CASCADE'),
     sa.ForeignKeyConstraint(['month_target_id'], ['va_monthly_targets.id'], onupdate='CASCADE'),
-    sa.PrimaryKeyConstraint('month_target_id')
+    sa.PrimaryKeyConstraint('month_target_id', 'forecast_month', 'dealer_id')
     )
     op.create_table('va_order_configurations',
     sa.Column('month', sa.Integer(), nullable=False),
