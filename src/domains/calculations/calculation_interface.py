@@ -5,7 +5,9 @@ import abc
 from fastapi import Request, UploadFile
 
 from src.domains.calculations.entities.va_slot_calculations import SlotCalculation
+from src.models.requests.calculation_request import GetCalculationRequest
 from src.models.responses.basic_response import NoDataResponse
+from src.models.responses.calculation_response import GetCalculationResponse
 
 
 class ICalculationUseCase:
@@ -15,6 +17,10 @@ class ICalculationUseCase:
     
     @abc.abstractmethod
     def upsert_bo_soa_oc_booking_prospect(self,request: Request, bo_soa_oc_booking_prospect_data: UploadFile, month: int, year: int) -> None:
+        pass
+    
+    @abc.abstractmethod
+    def get_calculation_detail(self, request: Request, get_calculation_request: GetCalculationRequest) -> GetCalculationResponse:
         pass
     
    

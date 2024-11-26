@@ -9,4 +9,18 @@ class OrderConfigurationsResponse(BaseModel):
 class StockPilotsResponse(BaseModel):
     segment_id: str
     percentage: int
+    
+class CategoryResponse(BaseModel):
+    id: str
+    
+class SegmentResponse(BaseModel):
+    id: str
+class ModelResponse(BaseModel):
+    id: str
+    manufacturer_code: str
+    group: str
+    category: CategoryResponse
+    segment: SegmentResponse
+    usage: str
+    euro: str
 

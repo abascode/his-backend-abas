@@ -7,6 +7,7 @@ from src.domains.calculations.calculation_interface import ICalculationUseCase
 from src.domains.calculations.calculation_usecase import CalculationUseCase
 from src.domains.forecasts.forecast_interface import IForecastUseCase
 from src.domains.forecasts.forecast_usecase import ForecastUseCase
+from src.models.requests.calculation_request import GetCalculationRequest
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
@@ -18,6 +19,7 @@ from src.models.responses.basic_response import (
     PaginationResponse,
     PaginationMetadata,
 )
+from src.models.responses.calculation_response import GetCalculationResponse
 from src.models.responses.forecast_response import GetForecastSummaryResponse
 
 router = APIRouter(prefix="/api/calculations", tags=["Calculations"])
@@ -55,3 +57,21 @@ def upsert_soa_bo_oc_booking_data(
     calculation_uc: ICalculationUseCase = Depends(CalculationUseCase),
 ) -> NoDataResponse:
     calculation_uc.upsert_bo_soa_oc_booking_prospect(request, bo_soa_oc_booking_prospect_data, month, year)
+
+@router.get(
+    "",
+    response_model=BasicResponse[GetCalculationResponse],
+    summary="Get calculation detail",
+    description="Get calculation details"
+)
+def get_calculation_detail(
+    request: Request,
+    get_calculation_request: GetCalculationRequest = Depends(),
+    calculation_uc: ICalculationUseCase = Depends(CalculationUseCase)
+)-> BasicResponse[GetCalculationRequest]:
+    data = calculation_uc.get_calculation_detail(request, get_calculation_request)
+    
+    return BasicResponse(
+        data = data,
+        message = "Success getting calculation detail"
+    )
