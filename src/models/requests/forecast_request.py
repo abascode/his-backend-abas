@@ -15,6 +15,12 @@ class CreateForecastRequest(BaseModel):
     details: List[dict]
 
 
+class ConfirmForecastRequest(BaseModel):
+    record_id: str
+    order_confirmation_date: str
+    data: List[dict]
+
+
 class GetForecastSummaryRequest(TableRequest, BaseModel):
     pass
 

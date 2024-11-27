@@ -13,6 +13,7 @@ from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
     GetForecastDetailRequest,
+    ConfirmForecastRequest,
 )
 from src.models.responses.forecast_response import (
     GetForecastSummaryResponse,
@@ -38,9 +39,17 @@ class IForecastUseCase:
         self, request: Request, get_forecast_detail_request: GetForecastDetailRequest
     ) -> GetForecastResponse:
         pass
-    
+
     @abc.abstractmethod
-    def upsert_monthly_target(self, request: Request, monthly_target_data: UploadFile, month: int, year: int) -> None:
+    def upsert_monthly_target(
+        self, request: Request, monthly_target_data: UploadFile, month: int, year: int
+    ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def confirm_forecast(
+        self, request: Request, confirm_request: ConfirmForecastRequest
+    ):
         pass
 
 
@@ -59,7 +68,7 @@ class IForecastRepository:
         year: int = None,
     ) -> Forecast | None:
         pass
-    
+
     @abc.abstractmethod
     def find_monthly_target(
         self,
@@ -87,11 +96,13 @@ class IForecastRepository:
         self, request: Request, query: GetForecastSummaryRequest
     ) -> tuple[List[GetForecastSummaryResponse], int]:
         pass
-    
-    def create_monthly_target(self, request: Request, monthly_target: MonthlyTarget) -> MonthlyTarget:
+
+    def create_monthly_target(
+        self, request: Request, monthly_target: MonthlyTarget
+    ) -> MonthlyTarget:
         pass
-    
-    def create_monthly_target_detail(self, request: Request, monthly_target_detail: MonthlyTargetDetail) -> MonthlyTargetDetail:
+
+    def create_monthly_target_detail(
+        self, request: Request, monthly_target_detail: MonthlyTargetDetail
+    ) -> MonthlyTargetDetail:
         pass
-    
-    

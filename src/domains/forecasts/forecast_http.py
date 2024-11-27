@@ -9,6 +9,7 @@ from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
     GetForecastDetailRequest,
+    ConfirmForecastRequest,
 )
 from src.models.responses.basic_response import (
     BasicResponse,
@@ -89,3 +90,14 @@ def upsert_monthly_target(
     forecast_uc.upsert_monthly_target(request, monthly_target_data, month, year)
 
     return NoDataResponse(message="Success Upserting Monthly Target")
+
+
+@router.post("/confirm")
+def confirm_forecast(
+    request: Request,
+    confirm_request: ConfirmForecastRequest,
+    forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
+):
+    forecast_uc.confirm_forecast(request, confirm_request)
+
+    return NoDataResponse(message="Success confirming forecast")
