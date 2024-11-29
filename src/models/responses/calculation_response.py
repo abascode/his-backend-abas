@@ -1,4 +1,3 @@
-
 from typing import List
 from pydantic import BaseModel
 
@@ -9,26 +8,21 @@ class GetCalculationStockPilotResponse(BaseModel):
     segment: SegmentResponse
     percentage: int
 
+
 class GetCalculationDetailResponse(BaseModel):
-    model: ModelResponse
-    forecast_month: int
-    take_off: int   
+    month: int
+    take_off: int
     bo: int
     soa: int
     oc: int
     booking_prospect: int
 
-class GetCalculationResponse(BaseModel):
-    id: str
-    month: int
-    year: int
-    
-    details: List[GetCalculationDetailResponse]
-    stock_pilots: List[GetCalculationStockPilotResponse]
-    
 
-    
-    
-    
-    
-    
+class GetCalculationDetailMonthsResponse(BaseModel):
+    id: str
+    name: str
+    months: List[GetCalculationDetailResponse]
+
+
+class GetCalculationResponse(BaseModel):
+    models: List[GetCalculationDetailMonthsResponse]
