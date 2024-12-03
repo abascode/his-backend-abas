@@ -9,7 +9,7 @@ from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
     GetForecastDetailRequest,
-    ConfirmForecastRequest,
+    ConfirmForecastRequest, ApprovalAllocationRequest,
 )
 from src.models.responses.basic_response import (
     BasicResponse,
@@ -101,3 +101,15 @@ def confirm_forecast(
     forecast_uc.confirm_forecast(request, confirm_request)
 
     return NoDataResponse(message="Success confirming forecast")
+
+@router.post("/approve")
+def confirm_forecast(
+    request: Request,
+    approval_request: ApprovalAllocationRequest,
+    approval_uc: IForecastUseCase = Depends(ForecastUseCase),
+):
+    res= approval_uc.approve_allocation(request, approval_request)
+
+    return BasicResponse(data=res, message="Success approving allocation data")
+
+

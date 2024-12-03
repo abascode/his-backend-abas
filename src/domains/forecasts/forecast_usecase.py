@@ -27,6 +27,7 @@ from src.models.requests.forecast_request import (
     GetForecastSummaryRequest,
     GetForecastDetailRequest,
     ConfirmForecastRequest,
+    ApprovalAllocationRequest,
 )
 from src.models.responses.basic_response import TextValueResponse
 from src.models.responses.forecast_response import (
@@ -489,3 +490,8 @@ class ForecastUseCase(IForecastUseCase):
                             ]["ws_priv_conf"]
 
         commit(request, Database.VEHICLE_ALLOCATION)
+
+    def approve_allocation(
+            self, request: Request, approval_request: ApprovalAllocationRequest
+    ):
+        return self.forecast_repo.approve_allocation_data(request, approval_request)

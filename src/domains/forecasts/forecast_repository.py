@@ -1,3 +1,4 @@
+import requests
 from typing import List
 
 from fastapi import Depends
@@ -12,8 +13,8 @@ from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.forecast_interface import IForecastRepository
-from src.models.requests.forecast_request import GetForecastSummaryRequest
-from src.models.responses.forecast_response import GetForecastSummaryResponse
+from src.models.requests.forecast_request import GetForecastSummaryRequest, ApprovalAllocationRequest
+from src.models.responses.forecast_response import GetForecastSummaryResponse, GetApprovalAllocationResponse
 from src.shared.utils.pagination import paginate
 
 
@@ -135,3 +136,25 @@ class ForecastRepository(IForecastRepository):
     def create_monthly_target_detail(self, request, monthly_target_detail: MonthlyTargetDetail):
         self.get_va_db(request).add(monthly_target_detail)
         self.get_va_db(request).flush()
+
+    def approve_allocation_data(
+            self, request: Request, get_approve_allocation_request: ApprovalAllocationRequest
+    ) -> GetApprovalAllocationResponse:
+        url = "https://gf623d321d6a913-hmsiprod.adb.ap-singapore-1.oraclecloudapps.com/ords/hmsi/dealer_forcast/allocation"
+
+        try:
+            response = requests.post(url, json=get_approve_allocation_request.model_dump())
+
+            if response.status_code == 200:
+                response_data = response.json()
+
+                return GetApprovalAllocationResponse(
+                    success_data=response_data.get("success_data", []),
+                    error_data=response_data.get("error_data", [])
+                )
+
+            else:
+                raise Exception(f"{response.text}")
+
+        except Exception as e:
+            raise Exception(f"{str(e)}")

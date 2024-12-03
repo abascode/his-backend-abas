@@ -14,10 +14,12 @@ from src.models.requests.forecast_request import (
     GetForecastSummaryRequest,
     GetForecastDetailRequest,
     ConfirmForecastRequest,
+    ApprovalAllocationRequest,
 )
 from src.models.responses.forecast_response import (
     GetForecastSummaryResponse,
     GetForecastResponse,
+    GetApprovalAllocationResponse,
 )
 
 
@@ -49,6 +51,12 @@ class IForecastUseCase:
     @abc.abstractmethod
     def confirm_forecast(
         self, request: Request, confirm_request: ConfirmForecastRequest
+    ):
+        pass
+
+    @abc.abstractmethod
+    def approve_allocation(
+            self, request: Request, approval_request: ApprovalAllocationRequest
     ):
         pass
 
@@ -105,4 +113,10 @@ class IForecastRepository:
     def create_monthly_target_detail(
         self, request: Request, monthly_target_detail: MonthlyTargetDetail
     ) -> MonthlyTargetDetail:
+        pass
+
+    @abc.abstractmethod
+    def approve_allocation_data(
+        self, request: Request, get_approve_allocation_request: ApprovalAllocationRequest
+    ) -> GetApprovalAllocationResponse:
         pass
