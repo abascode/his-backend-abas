@@ -56,7 +56,7 @@ class IForecastUseCase:
 
     @abc.abstractmethod
     def approve_allocation(
-            self, request: Request, approval_request: ApprovalAllocationRequest
+            self, request: Request, approval_request: ApprovalAllocationRequest, month: int, year: int
     ):
         pass
 

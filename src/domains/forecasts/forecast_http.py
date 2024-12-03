@@ -102,13 +102,20 @@ def confirm_forecast(
 
     return NoDataResponse(message="Success confirming forecast")
 
-@router.post("/approve")
+@router.post(
+    "/approve",
+    response_model=BasicResponse,
+    summary="Approve Allocation",
+    description="Approve Allocation",
+)
 def confirm_forecast(
     request: Request,
+    month: int,
+    year: int,
     approval_request: ApprovalAllocationRequest,
     approval_uc: IForecastUseCase = Depends(ForecastUseCase),
 ):
-    res= approval_uc.approve_allocation(request, approval_request)
+    res= approval_uc.approve_allocation(request, approval_request, month, year)
 
     return BasicResponse(data=res, message="Success approving allocation data")
 
