@@ -15,7 +15,7 @@ from src.models.responses.calculation_response import GetCalculationDetailRespon
 from src.models.responses.master_response import CategoryResponse, ModelResponse, SegmentResponse
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
-from src.shared.utils.date import is_year_month
+from src.shared.utils.date import get_month_difference, is_date_string_format
 from src.shared.utils.excel import get_header_column_index, get_worksheet, open_excel_workbook
 from src.shared.utils.file_utils import clear_directory, get_file_extension, save_upload_file
 from src.shared.utils.xid import generate_xid
@@ -81,7 +81,7 @@ class CalculationUseCase(ICalculationUseCase):
     
         forecast_month_headers = [
             (cell.column,cell.value) for cell in worksheet[HEADER_ROW_LOCATION]
-            if is_year_month(cell.value)
+            if is_date_string_format(cell.value, "%Y-%m")
         ]
         
         for row in worksheet.iter_rows(min_row=HEADER_ROW_LOCATION + 1, max_row=worksheet.max_row):
@@ -96,12 +96,20 @@ class CalculationUseCase(ICalculationUseCase):
             for column_index, header_name in forecast_month_headers:
                 take_off_value = row[column_index - 1].value
                 
-                _, month = header_name.split("-")
+                forecast_month = get_month_difference(
+                    f"{year}-{month}", header_name
+                )
+                
+                if forecast_month < 0:
+                    raise HTTPException(
+                        status_code=http.HTTPStatus.BAD_REQUEST,
+                        detail=f"Forecast month cannot be less than the current month",
+                    )
                 
                 slot_calculation_detail = SlotCalculationDetail(
                     slot_calculation_id = slot_calculation.id,
                     model_id = model_detail.id,
-                    forecast_month = month,
+                    forecast_month = forecast_month,
                     take_off= take_off_value,
                 )
                 

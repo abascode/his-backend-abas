@@ -16,11 +16,11 @@ class SlotCalculationDetail(BaseModel):
         String(255), ForeignKey("va_models.id", onupdate="CASCADE"),primary_key=True,nullable=False
     )
     forecast_month: MappedColumn[int] = mapped_column(Integer, primary_key=True,nullable=False)
-    take_off: MappedColumn[int] = mapped_column(Integer, nullable=True)
-    bo: MappedColumn[int] = mapped_column(Integer, nullable=True)
-    soa: MappedColumn[int] = mapped_column(Integer, nullable=True)
-    oc: MappedColumn[int] = mapped_column(Integer, nullable=True)
-    booking_prospect: MappedColumn[int] = mapped_column(Integer, nullable=True)
+    take_off: MappedColumn[int] = mapped_column(Integer, nullable=True, server_default=text("0"))
+    bo: MappedColumn[int] = mapped_column(Integer, nullable=True, server_default=text("0"))
+    soa: MappedColumn[int] = mapped_column(Integer, nullable=True, server_default=text("0"))
+    oc: MappedColumn[int] = mapped_column(Integer, nullable=True, server_default=text("0"))
+    booking_prospect: MappedColumn[int] = mapped_column(Integer, nullable=True, server_default=text("0"))
     
     
     created_by: MappedColumn[str] = mapped_column(
