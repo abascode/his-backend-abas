@@ -296,7 +296,7 @@ class ForecastUseCase(IForecastUseCase):
         return CATEGORY_MAPPING.get(category, None)
 
     def upsert_monthly_target(
-        self, request, monthly_target_data: UploadFile, month: int, year: int
+        self, request, file: UploadFile, month: int, year: int
     ):
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
 
@@ -316,12 +316,12 @@ class ForecastUseCase(IForecastUseCase):
             )
 
         temp_storage_path = f"{os.getcwd()}/src/temp"
-        file_extension = get_file_extension(monthly_target_data)
+        file_extension = get_file_extension(file)
         unique_filename = f"{generate_xid()}.{file_extension}"
 
         file_path = Path(temp_storage_path) / unique_filename
 
-        save_upload_file(monthly_target_data, file_path)
+        save_upload_file(file, file_path)
 
         workbook = openpyxl.load_workbook(file_path)
         worksheet = workbook.active

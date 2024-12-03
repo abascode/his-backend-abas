@@ -29,7 +29,7 @@ class CalculationUseCase(ICalculationUseCase):
         self.master_repository = master_repository
         
     #TODO : waiting template finalization
-    def upsert_bo_soa_oc_booking_prospect(self, request, bo_soa_oc_booking_prospect_data: UploadFile, month: int, year: int):
+    def upsert_bo_soa_oc_booking_prospect(self, request, file: UploadFile, month: int, year: int):
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
         
         slot_calculation = self.calculation_repo.find_calculation(request, month=month, year=year)
@@ -38,7 +38,7 @@ class CalculationUseCase(ICalculationUseCase):
         
         pass
             
-    def upsert_take_off_data(self,request: Request, take_off_data: UploadFile, month: int, year: int) -> None:
+    def upsert_take_off_data(self,request: Request, file: UploadFile, month: int, year: int) -> None:
         
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
         
@@ -55,12 +55,12 @@ class CalculationUseCase(ICalculationUseCase):
         
         
         temp_storage_path = f"{os.getcwd()}/src/temp"
-        file_extension = get_file_extension(take_off_data)
+        file_extension = get_file_extension(file)
         unique_filename = f"{generate_xid()}.{file_extension}"
         
         file_path = Path(temp_storage_path) / unique_filename
         
-        save_upload_file(take_off_data, file_path)
+        save_upload_file(file, file_path)
         
         workbook = open_excel_workbook(file_path)
         worksheet = get_worksheet(workbook=workbook)
