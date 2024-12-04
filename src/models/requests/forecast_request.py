@@ -29,3 +29,8 @@ class GetForecastDetailRequest(BaseModel):
     month: int
     year: int
     dealer_id: str
+
+
+class ApprovalAllocationRequest(BaseModel):
+    month: int
+    year: int
