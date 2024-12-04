@@ -14,7 +14,7 @@ from src.models.requests.forecast_request import (
     GetForecastSummaryRequest,
     GetForecastDetailRequest,
     ConfirmForecastRequest,
-    ApprovalAllocationRequest,
+    ApprovalAllocationRequest, ApprovalAllocationData,
 )
 from src.models.responses.forecast_response import (
     GetForecastSummaryResponse,
@@ -58,6 +58,10 @@ class IForecastUseCase:
     def approve_allocation(
             self, request: Request, approval_request: ApprovalAllocationRequest, month: int, year: int
     ):
+        pass
+
+    @abc.abstractmethod
+    def map_allocations(self, data: ApprovalAllocationData, month: int, year: int):
         pass
 
 

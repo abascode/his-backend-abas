@@ -1,11 +1,12 @@
 import requests
 from typing import List
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from sqlalchemy import text, literal
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
+from src.config.config import get_config
 from src.dependencies.database_dependency import get_va_db
 from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
@@ -14,7 +15,12 @@ from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTarg
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.forecast_interface import IForecastRepository
 from src.models.requests.forecast_request import GetForecastSummaryRequest, ApprovalAllocationRequest
-from src.models.responses.forecast_response import GetForecastSummaryResponse, GetApprovalAllocationResponse
+from src.models.responses.forecast_response import (
+    GetForecastSummaryResponse,
+    GetApprovalAllocationResponse,
+    GetApprovalAllocationSuccessResponse,
+    GetApprovalAllocationErrorResponse
+)
 from src.shared.utils.pagination import paginate
 
 
@@ -140,7 +146,8 @@ class ForecastRepository(IForecastRepository):
     def approve_allocation_data(
             self, request: Request, get_approve_allocation_request: ApprovalAllocationRequest
     ) -> GetApprovalAllocationResponse:
-        url = "https://gf623d321d6a913-hmsiprod.adb.ap-singapore-1.oraclecloudapps.com/ords/hmsi/dealer_forcast/allocation"
+        config = get_config()
+        url = config.outbound["dealer_forecast"].base_url
 
         try:
             response = requests.post(url, json=get_approve_allocation_request.model_dump())
@@ -149,10 +156,23 @@ class ForecastRepository(IForecastRepository):
                 response_data = response.json()
 
                 return GetApprovalAllocationResponse(
-                    success_data=response_data.get("success_data", []),
-                    error_data=response_data.get("error_data", [])
+                    success_data=[
+                        GetApprovalAllocationSuccessResponse(
+                            primary_id=item.get("primary_id"),
+                            status="success",
+                            message=item.get("message", "data has been updated successfully"),
+                        )
+                        for item in response_data.get("success_data", [])
+                    ],
+                    error_data=[
+                        GetApprovalAllocationErrorResponse(
+                            primary_id=item.get("primary_id", "-999"),
+                            status="error",
+                            message=item.get("message", "Unknown error occurred"),
+                        )
+                        for item in response_data.get("error_data", [])
+                    ],
                 )
-
             else:
                 raise Exception(f"{response.text}")
 

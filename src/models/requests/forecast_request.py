@@ -31,8 +31,8 @@ class GetForecastDetailRequest(BaseModel):
     dealer_id: str
 
 class ApprovalAllocationData(BaseModel):
-    RECORD_ID: str
-    DEALER_FORECAST_ID: str
+    RECORD_ID: int
+    DEALER_FORECAST_ID: int
     MODEL_VARIANT: str
     N0_HMSI_ALLOCATION: int
     N1_HMSI_ALLOCATION: int
