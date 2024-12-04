@@ -33,12 +33,12 @@ router = APIRouter(prefix="/api/calculations", tags=["Calculations"])
 )
 def upsert_take_off_data(
     request: Request,
-    take_off_data: UploadFile,
+    file: UploadFile,
     month: int = Form(...),
     year: int = Form(...),
     calculation_uc: ICalculationUseCase = Depends(CalculationUseCase),
 ) -> NoDataResponse:
-    calculation_uc.upsert_take_off_data(request, take_off_data, month, year)
+    calculation_uc.upsert_take_off_data(request, file, month, year)
 
     return NoDataResponse(message="Success uploading take off data!")
 
@@ -51,12 +51,12 @@ def upsert_take_off_data(
 )
 def upsert_soa_bo_oc_booking_data(
     request: Request,
-    bo_soa_oc_booking_prospect_data: UploadFile,
+    file: UploadFile,
     month: int = Form(...),
     year: int = Form(...),
     calculation_uc: ICalculationUseCase = Depends(CalculationUseCase),
 ) -> NoDataResponse:
-    calculation_uc.upsert_bo_soa_oc_booking_prospect(request, bo_soa_oc_booking_prospect_data, month, year)
+    calculation_uc.upsert_bo_soa_oc_booking_prospect(request, file, month, year)
 
 @router.get(
     "",

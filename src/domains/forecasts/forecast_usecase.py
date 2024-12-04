@@ -37,7 +37,7 @@ from src.models.responses.forecast_response import (
 )
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
-from src.shared.utils.date import is_year_month
+from src.shared.utils.date import get_month_difference, is_date_string_format
 from src.shared.utils.excel import get_header_column_index
 from src.shared.utils.file_utils import (
     clear_directory,
@@ -296,7 +296,7 @@ class ForecastUseCase(IForecastUseCase):
         return CATEGORY_MAPPING.get(category, None)
 
     def upsert_monthly_target(
-        self, request, monthly_target_data: UploadFile, month: int, year: int
+        self, request, file: UploadFile, month: int, year: int
     ):
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
 
@@ -316,12 +316,12 @@ class ForecastUseCase(IForecastUseCase):
             )
 
         temp_storage_path = f"{os.getcwd()}/src/temp"
-        file_extension = get_file_extension(monthly_target_data)
+        file_extension = get_file_extension(file)
         unique_filename = f"{generate_xid()}.{file_extension}"
 
         file_path = Path(temp_storage_path) / unique_filename
 
-        save_upload_file(monthly_target_data, file_path)
+        save_upload_file(file, file_path)
 
         workbook = openpyxl.load_workbook(file_path)
         worksheet = workbook.active
@@ -359,7 +359,7 @@ class ForecastUseCase(IForecastUseCase):
         forecast_month_headers = [
             (cell.column, cell.value)
             for cell in worksheet[HEADER_ROW_LOCATION]
-            if is_year_month(cell.value)
+            if is_date_string_format(cell.value, "%Y-%m")
         ]
 
         for row in worksheet.iter_rows(
@@ -395,11 +395,19 @@ class ForecastUseCase(IForecastUseCase):
             for column_index, header_name in forecast_month_headers:
                 target_value = row[column_index - 1].value
 
-                _, month = header_name.split("-")
-
+                forecast_month = get_month_difference(
+                    f"{year}-{month}", header_name
+                )
+                
+                if forecast_month < 0:
+                    raise HTTPException(
+                        status_code=http.HTTPStatus.BAD_REQUEST,
+                        detail=f"Forecast month cannot be less than the current month",
+                    )
+                    
                 monthly_target_detail = MonthlyTargetDetail(
                     month_target_id=monthly_target.id,
-                    forecast_month=month,
+                    forecast_month=forecast_month,
                     dealer_id=dealer.id,
                     target=target_value,
                     category_id=category.id,

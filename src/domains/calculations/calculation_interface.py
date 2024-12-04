@@ -12,11 +12,11 @@ from src.models.responses.calculation_response import GetCalculationResponse
 
 class ICalculationUseCase:
     @abc.abstractmethod
-    def upsert_take_off_data(self,request: Request, take_off_data: UploadFile, month: int, year: int) -> None:
+    def upsert_take_off_data(self,request: Request, file: UploadFile, month: int, year: int) -> None:
         pass
     
     @abc.abstractmethod
-    def upsert_bo_soa_oc_booking_prospect(self,request: Request, bo_soa_oc_booking_prospect_data: UploadFile, month: int, year: int) -> None:
+    def upsert_bo_soa_oc_booking_prospect(self,request: Request, file: UploadFile, month: int, year: int) -> None:
         pass
     
     @abc.abstractmethod

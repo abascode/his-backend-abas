@@ -42,7 +42,7 @@ class IForecastUseCase:
 
     @abc.abstractmethod
     def upsert_monthly_target(
-        self, request: Request, monthly_target_data: UploadFile, month: int, year: int
+        self, request: Request, file: UploadFile, month: int, year: int
     ) -> None:
         pass
 

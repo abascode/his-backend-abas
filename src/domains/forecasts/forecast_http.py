@@ -82,12 +82,12 @@ def get_forecast_detail(
 )
 def upsert_monthly_target(
     request: Request,
-    monthly_target_data: UploadFile = File(...),
+    file: UploadFile = File(...),
     month: int = Form(...),
     year: int = Form(...),
     forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
 ) -> NoDataResponse:
-    forecast_uc.upsert_monthly_target(request, monthly_target_data, month, year)
+    forecast_uc.upsert_monthly_target(request, file, month, year)
 
     return NoDataResponse(message="Success Upserting Monthly Target")
 

@@ -33,11 +33,27 @@ def convert_number_to_month(month_number: int) -> str:
     
     return NUM_MONTHS[month_number]
 
-def is_year_month(date_string: str) -> bool:
+
+def is_date_string_format(date_string: str, format: str) -> bool:
     try:
-        datetime.strptime(date_string, "%Y-%m")
+        datetime.strptime(date_string, format)
         return True
     except ValueError:
         return False
+    
+
+def get_month_difference(first_month: str, second_month: str, date_format: str = "%Y-%m") -> int:
+    try:
+        first_date = datetime.strptime(first_month, date_format)
+        second_date = datetime.strptime(second_month, date_format)
+    except ValueError as e:
+        raise ValueError(
+            f"Invalid date or format. Ensure the dates match the provided format '{date_format}'."
+        ) from e
+    
+
+    return (second_date.year - first_date.year) * 12 + (second_date.month - first_date.month)
+
+
     
 
