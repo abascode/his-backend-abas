@@ -47,3 +47,7 @@ class PaginationResponse(BaseModel, Generic[T]):
 class TextValueResponse(BaseModel):
     text: str
     value: str | int
+
+class PdfResponse(BaseModel, Generic[T]):
+    message: str
+    document_link: str

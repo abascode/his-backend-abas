@@ -18,6 +18,7 @@ from src.models.responses.basic_response import (
     NoDataResponse,
     PaginationResponse,
     PaginationMetadata,
+    PdfResponse,
 )
 from src.models.responses.forecast_response import GetForecastSummaryResponse
 
@@ -102,7 +103,7 @@ def confirm_forecast(
 ):
     forecast_uc.confirm_forecast(request, confirm_request)
 
-    return NoDataResponse(message="Success confirming forecast")
+    return PdfResponse(message="Success confirming forecast")
 
 
 @router.post(
