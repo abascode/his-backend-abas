@@ -14,7 +14,7 @@ from src.models.requests.forecast_request import (
     GetForecastSummaryRequest,
     GetForecastDetailRequest,
     ConfirmForecastRequest,
-    ApprovalAllocationRequest, ApprovalAllocationData,
+    ApprovalAllocationRequest,
 )
 from src.models.responses.forecast_response import (
     GetForecastSummaryResponse,
@@ -56,12 +56,8 @@ class IForecastUseCase:
 
     @abc.abstractmethod
     def approve_allocation(
-            self, request: Request, approval_request: ApprovalAllocationRequest, month: int, year: int
-    ):
-        pass
-
-    @abc.abstractmethod
-    def map_allocations(self, data: ApprovalAllocationData, month: int, year: int):
+        self, request: Request, approval_request: ApprovalAllocationRequest
+    ) -> None:
         pass
 
 
@@ -74,7 +70,7 @@ class IForecastRepository:
     def find_forecast(
         self,
         request: Request,
-        forecast_id: str,
+        forecast_id: str = None,
         dealer_id: str = None,
         month: int = None,
         year: int = None,
@@ -121,6 +117,10 @@ class IForecastRepository:
 
     @abc.abstractmethod
     def approve_allocation_data(
-        self, request: Request, get_approve_allocation_request: ApprovalAllocationRequest
-    ) -> GetApprovalAllocationResponse:
+        self,
+        request: Request,
+        payload: dict,
+        month: int,
+        year: int,
+    ):
         pass

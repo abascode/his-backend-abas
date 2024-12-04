@@ -28,7 +28,6 @@ from src.models.requests.forecast_request import (
     GetForecastDetailRequest,
     ConfirmForecastRequest,
     ApprovalAllocationRequest,
-    ApprovalAllocationData,
 )
 from src.models.responses.basic_response import TextValueResponse
 from src.models.responses.forecast_response import (
@@ -36,7 +35,6 @@ from src.models.responses.forecast_response import (
     GetForecastResponse,
     GetForecastDetailResponse,
     GetForecastDetailMonthResponse,
-    GetApprovalAllocationResponse,
 )
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
@@ -493,22 +491,28 @@ class ForecastUseCase(IForecastUseCase):
 
         commit(request, Database.VEHICLE_ALLOCATION)
 
-    def map_allocations(self, data: ApprovalAllocationData, month: int, year: int) -> List[Dict[str, int]]:
-        allocations = []
-        for i in range(5):
-            month = (month + i - 1) % 12 + 1
-            allocation_year = year + (month + i - 1) // 12
-            allocations.append({
-                "month": month,
-                "year": allocation_year,
-                "allocation": getattr(data, f"N{i}_HMSI_ALLOCATION")
-            })
-        return allocations
-
     def approve_allocation(
-            self, request: Request, approval_request: ApprovalAllocationRequest, month: int, year: int
-    ) -> GetApprovalAllocationResponse:
-        try:
-            return self.forecast_repo.approve_allocation_data(request, approval_request)
-        except HTTPException as e:
-            raise e
+        self, request: Request, approval_request: ApprovalAllocationRequest
+    ) -> None:
+        forecast = self.forecast_repo.find_forecast(
+            request, month=approval_request.month, year=approval_request.year
+        )
+
+        if forecast is None:
+            raise HTTPException(
+                status_code=http.HTTPStatus.NOT_FOUND, detail="Forecast is not found"
+            )
+
+        payload = {"data": []}
+
+        for i in forecast.details:
+            if i.deletable == 0:
+                temp = {"RECORD_ID": forecast.id, "DEALER_FORECAST_ID": i.id}
+                for j in i.months:
+                    if j.deletable == 0:
+                        temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = j.hmsi_allocation
+                payload["data"].append(temp)
+
+        self.forecast_repo.approve_allocation_data(
+            request, payload, approval_request.month, approval_request.year
+        )

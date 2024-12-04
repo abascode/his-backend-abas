@@ -1,3 +1,6 @@
+import http
+import json
+
 import requests
 from typing import List
 
@@ -14,12 +17,15 @@ from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.forecast_interface import IForecastRepository
-from src.models.requests.forecast_request import GetForecastSummaryRequest, ApprovalAllocationRequest
+from src.models.requests.forecast_request import (
+    GetForecastSummaryRequest,
+    ApprovalAllocationRequest,
+)
 from src.models.responses.forecast_response import (
     GetForecastSummaryResponse,
     GetApprovalAllocationResponse,
     GetApprovalAllocationSuccessResponse,
-    GetApprovalAllocationErrorResponse
+    GetApprovalAllocationErrorResponse,
 )
 from src.shared.utils.pagination import paginate
 
@@ -112,7 +118,7 @@ class ForecastRepository(IForecastRepository):
                 ForecastDetail.dealer_id,
             )
         )
-        
+
     def find_monthly_target(
         self,
         request: Request,
@@ -120,7 +126,11 @@ class ForecastRepository(IForecastRepository):
         month: str = None,
         year: int = None,
     ) -> MonthlyTarget | None:
-        query = self.get_va_db(request).query(MonthlyTarget).filter(MonthlyTarget.deletable == 0)
+        query = (
+            self.get_va_db(request)
+            .query(MonthlyTarget)
+            .filter(MonthlyTarget.deletable == 0)
+        )
 
         if monthly_target_id is not None:
             query = query.filter(MonthlyTarget.id == monthly_target_id)
@@ -132,49 +142,46 @@ class ForecastRepository(IForecastRepository):
             query = query.filter(MonthlyTarget.year == year)
 
         return query.first()
-    
-    def create_monthly_target(self, request, monthly_target: MonthlyTarget) -> MonthlyTarget:
+
+    def create_monthly_target(
+        self, request, monthly_target: MonthlyTarget
+    ) -> MonthlyTarget:
         self.get_va_db(request).add(monthly_target)
         self.get_va_db(request).flush()
-        
+
         return monthly_target
-        
-    def create_monthly_target_detail(self, request, monthly_target_detail: MonthlyTargetDetail):
+
+    def create_monthly_target_detail(
+        self, request, monthly_target_detail: MonthlyTargetDetail
+    ):
         self.get_va_db(request).add(monthly_target_detail)
         self.get_va_db(request).flush()
 
     def approve_allocation_data(
-            self, request: Request, get_approve_allocation_request: ApprovalAllocationRequest
-    ) -> GetApprovalAllocationResponse:
+        self,
+        request: Request,
+        month: int,
+        year: int,
+        payload: dict,
+    ):
         config = get_config()
-        url = config.outbound["dealer_forecast"].base_url
+        url = config.outbound[
+            "hoyu"
+        ].base_url + "/ords/hmsi/dealer_forcast/allocation?month={}&year={}".format(
+            month, year
+        )
 
-        try:
-            response = requests.post(url, json=get_approve_allocation_request.model_dump())
+        response = requests.post(
+            url,
+            json=payload,
+            auth=(
+                config.outbound["hoyu"].username,
+                config.outbound["hoyu"].password,
+            ),
+        )
 
-            if response.status_code == 200:
-                response_data = response.json()
-
-                return GetApprovalAllocationResponse(
-                    success_data=[
-                        GetApprovalAllocationSuccessResponse(
-                            primary_id=item.get("primary_id"),
-                            status="success",
-                            message=item.get("message", "data has been updated successfully"),
-                        )
-                        for item in response_data.get("success_data", [])
-                    ],
-                    error_data=[
-                        GetApprovalAllocationErrorResponse(
-                            primary_id=item.get("primary_id", "-999"),
-                            status="error",
-                            message=item.get("message", "Unknown error occurred"),
-                        )
-                        for item in response_data.get("error_data", [])
-                    ],
-                )
-            else:
-                raise Exception(f"{response.text}")
-
-        except Exception as e:
-            raise Exception(f"{str(e)}")
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Outbound Error: " + response.url,
+            )

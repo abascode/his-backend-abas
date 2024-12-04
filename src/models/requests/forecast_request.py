@@ -30,15 +30,7 @@ class GetForecastDetailRequest(BaseModel):
     year: int
     dealer_id: str
 
-class ApprovalAllocationData(BaseModel):
-    RECORD_ID: int
-    DEALER_FORECAST_ID: int
-    MODEL_VARIANT: str
-    N0_HMSI_ALLOCATION: int
-    N1_HMSI_ALLOCATION: int
-    N2_HMSI_ALLOCATION: int
-    N3_HMSI_ALLOCATION: int
-    N4_HMSI_ALLOCATION: int
 
 class ApprovalAllocationRequest(BaseModel):
-    data: List[ApprovalAllocationData]
+    month: int
+    year: int
