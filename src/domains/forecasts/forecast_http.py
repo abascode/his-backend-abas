@@ -30,6 +30,7 @@ router = APIRouter(prefix="/api/forecasts", tags=["Forecast"])
     response_model=NoDataResponse,
     summary="Upsert Forecast",
     description="Upsert forecast",
+    dependencies=[Depends(api_key_auth)],
 )
 def upsert_forecast(
     request: Request,
@@ -95,7 +96,9 @@ def upsert_monthly_target(
     return NoDataResponse(message="Success Upserting Monthly Target")
 
 
-@router.post("/confirm")
+@router.post(
+    "/confirm", dependencies=[Depends(api_key_auth)], response_model=PdfResponse
+)
 def confirm_forecast(
     request: Request,
     confirm_request: ConfirmForecastRequest,
@@ -108,7 +111,7 @@ def confirm_forecast(
 
 @router.post(
     "/approve",
-    response_model=BasicResponse,
+    response_model=NoDataResponse,
     summary="Approve Allocation",
     description="Approve Allocation",
     dependencies=[Depends(api_key_auth)],
@@ -117,7 +120,7 @@ def approve_forecast(
     request: Request,
     approval_request: ApprovalAllocationRequest,
     approval_uc: IForecastUseCase = Depends(ForecastUseCase),
-)-> NoDataResponse:
+) -> NoDataResponse:
     approval_uc.approve_allocation(request, approval_request)
 
     return NoDataResponse(message="Success approving allocation data")

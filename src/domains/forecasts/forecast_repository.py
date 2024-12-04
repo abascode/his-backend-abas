@@ -81,13 +81,27 @@ class ForecastRepository(IForecastRepository):
     def get_forecast_summary_response(
         self, request: Request, get_summary_request: GetForecastSummaryRequest
     ) -> tuple[List[GetForecastSummaryResponse], int]:
-        query = self.get_va_db(request).query(
-            Forecast.month.label("month"),
-            Forecast.year.label("year"),
-            literal(0).label("dealer_submit"),
-            literal(0).label("remaining_dealer_submit"),
-            literal(0).label("order_confirmation"),
+
+        query = (
+            self.get_va_db(request)
+            .query(
+                Forecast.month.label("month"),
+                Forecast.year.label("year"),
+                literal(0).label("dealer_submit"),
+                literal(0).label("remaining_dealer_submit"),
+                literal(0).label("order_confirmation"),
+            )
+            .filter(Forecast.deletable == 0)
         )
+
+        if (
+            get_summary_request.month is not None
+            and get_summary_request.year is not None
+        ):
+            query = query.filter(
+                Forecast.month == get_summary_request.month,
+                Forecast.year == get_summary_request.year,
+            )
 
         res, cnt = paginate(
             query,

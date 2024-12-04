@@ -22,7 +22,8 @@ class ConfirmForecastRequest(BaseModel):
 
 
 class GetForecastSummaryRequest(TableRequest, BaseModel):
-    pass
+    month: int | None = None
+    year: int | None = None
 
 
 class GetForecastDetailRequest(BaseModel):
