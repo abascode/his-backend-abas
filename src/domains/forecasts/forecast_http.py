@@ -117,7 +117,7 @@ def approve_forecast(
     request: Request,
     approval_request: ApprovalAllocationRequest,
     approval_uc: IForecastUseCase = Depends(ForecastUseCase),
-):
-    res = approval_uc.approve_allocation(request, approval_request)
+)-> NoDataResponse:
+    approval_uc.approve_allocation(request, approval_request)
 
-    return BasicResponse(data=res, message="Success approving allocation data")
+    return NoDataResponse(message="Success approving allocation data")
