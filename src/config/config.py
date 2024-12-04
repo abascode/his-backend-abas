@@ -9,6 +9,7 @@ class App:
     port: int
     name: str
     environment: str
+    api_keys: list[str]
 
     def __init__(self, **data: Any):
         self.__dict__.update(**data)
@@ -36,6 +37,8 @@ class Gcs:
 class Outbound:
     base_url: str
     api_key: str | None
+    username: str | None
+    password: str | None
 
     def __init__(self, **data: Any):
         self.__dict__.update(**data)

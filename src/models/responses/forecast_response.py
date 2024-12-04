@@ -32,3 +32,18 @@ class GetForecastResponse(BaseModel):
     year: int
     dealer: TextValueResponse
     models: List[GetForecastDetailResponse]
+
+class GetApprovalAllocationSuccessResponse(BaseModel):
+    primary_id: str
+    status: str
+    message: str
+
+class GetApprovalAllocationErrorResponse(BaseModel):
+    primary_id: str
+    status: str
+    message: str
+
+class GetApprovalAllocationResponse(BaseModel):
+    success_data: List[GetApprovalAllocationSuccessResponse]
+    error_data: List[GetApprovalAllocationErrorResponse]
+

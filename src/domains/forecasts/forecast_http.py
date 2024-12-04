@@ -3,6 +3,7 @@ import math
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from starlette.requests import Request
 
+from src.dependencies.auth_dependency import api_key_auth
 from src.domains.forecasts.forecast_interface import IForecastUseCase
 from src.domains.forecasts.forecast_usecase import ForecastUseCase
 from src.models.requests.forecast_request import (
@@ -10,12 +11,14 @@ from src.models.requests.forecast_request import (
     GetForecastSummaryRequest,
     GetForecastDetailRequest,
     ConfirmForecastRequest,
+    ApprovalAllocationRequest,
 )
 from src.models.responses.basic_response import (
     BasicResponse,
     NoDataResponse,
     PaginationResponse,
     PaginationMetadata,
+    PdfResponse,
 )
 from src.models.responses.forecast_response import GetForecastSummaryResponse
 
@@ -100,4 +103,21 @@ def confirm_forecast(
 ):
     forecast_uc.confirm_forecast(request, confirm_request)
 
-    return NoDataResponse(message="Success confirming forecast")
+    return PdfResponse(message="Success confirming forecast")
+
+
+@router.post(
+    "/approve",
+    response_model=BasicResponse,
+    summary="Approve Allocation",
+    description="Approve Allocation",
+    dependencies=[Depends(api_key_auth)],
+)
+def approve_forecast(
+    request: Request,
+    approval_request: ApprovalAllocationRequest,
+    approval_uc: IForecastUseCase = Depends(ForecastUseCase),
+)-> NoDataResponse:
+    approval_uc.approve_allocation(request, approval_request)
+
+    return NoDataResponse(message="Success approving allocation data")
