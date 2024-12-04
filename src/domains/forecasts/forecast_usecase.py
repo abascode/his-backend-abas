@@ -223,7 +223,7 @@ class ForecastUseCase(IForecastUseCase):
                 if match.group(2) == "hmsi_allocation":
                     months_map[match.group(1)].hmsi_allocation = v
 
-        model = self.master_repo.find_model(request, detail["model_varian"])
+        model = self.master_repo.find_model(request, detail["model_variant"])
 
         if model is None:
             raise HTTPException(
@@ -232,7 +232,7 @@ class ForecastUseCase(IForecastUseCase):
             )
 
         return ForecastDetail(
-            model_id=detail["model_varian"],
+            model_id=detail["model_variant"],
             end_stock=detail["end_stock"],
             id=detail["dealer_forecast_id"],
             months=[i for i in months_map.values()],
@@ -295,9 +295,7 @@ class ForecastUseCase(IForecastUseCase):
 
         return CATEGORY_MAPPING.get(category, None)
 
-    def upsert_monthly_target(
-        self, request, file: UploadFile, month: int, year: int
-    ):
+    def upsert_monthly_target(self, request, file: UploadFile, month: int, year: int):
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
 
         monthly_target = self.forecast_repo.find_monthly_target(
@@ -395,16 +393,14 @@ class ForecastUseCase(IForecastUseCase):
             for column_index, header_name in forecast_month_headers:
                 target_value = row[column_index - 1].value
 
-                forecast_month = get_month_difference(
-                    f"{year}-{month}", header_name
-                )
-                
+                forecast_month = get_month_difference(f"{year}-{month}", header_name)
+
                 if forecast_month < 0:
                     raise HTTPException(
                         status_code=http.HTTPStatus.BAD_REQUEST,
                         detail=f"Forecast month cannot be less than the current month",
                     )
-                    
+
                 monthly_target_detail = MonthlyTargetDetail(
                     month_target_id=monthly_target.id,
                     forecast_month=forecast_month,
