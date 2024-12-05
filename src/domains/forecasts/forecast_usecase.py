@@ -195,7 +195,12 @@ class ForecastUseCase(IForecastUseCase):
         months_map: Dict[str, ForecastDetailMonth] = {}
         for k, v in detail.items():
             match = re.match(pattern, k)
-            if match:
+            if match or k in [
+                "record_id",
+                "dealer_forecast_id",
+                "model_variant",
+                "end_stock",
+            ]:
                 if match.group(1) not in months_map:
                     months_map[match.group(1)] = ForecastDetailMonth(
                         forecast_month=int(match.group(1)),
