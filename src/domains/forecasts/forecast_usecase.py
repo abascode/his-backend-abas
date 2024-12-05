@@ -229,7 +229,7 @@ class ForecastUseCase(IForecastUseCase):
         if model is None:
             raise HTTPException(
                 status_code=http.HTTPStatus.BAD_REQUEST,
-                detail=f"Model {detail['model_varian']} not found",
+                detail=f"Model {detail['model_variant']} not found",
             )
 
         return ForecastDetail(
