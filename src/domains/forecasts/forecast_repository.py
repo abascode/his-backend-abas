@@ -117,7 +117,7 @@ class ForecastRepository(IForecastRepository):
                 remaining_dealer_submit=remaining_dealer_submit,
                 order_confirmation=order_confirmation,
             )
-            for year, month, dealer_submit, remaining_dealer_submit, order_confirmation in res
+            for month, year, dealer_submit, remaining_dealer_submit, order_confirmation in res
         ], cnt
 
     def find_forecast_detail(
