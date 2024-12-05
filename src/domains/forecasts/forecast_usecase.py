@@ -512,8 +512,8 @@ class ForecastUseCase(IForecastUseCase):
         for i in forecast.details:
             if i.deletable == 0:
                 temp = {
-                    "RECORD_ID": forecast.id,
-                    "DEALER_FORECAST_ID": i.id,
+                    "RECORD_ID": i.id,
+                    "DEALER_FORECAST_ID": forecast.id,
                     "MODEL_VARIANT": i.model_id,
                 }
                 for j in i.months:
