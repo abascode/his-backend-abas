@@ -106,7 +106,9 @@ def confirm_forecast(
 ):
     forecast_uc.confirm_forecast(request, confirm_request)
 
-    return PdfResponse(message="Success confirming forecast")
+    return PdfResponse(
+        message="Success confirming forecast", document_link="https://www.google.com"
+    )
 
 
 @router.post(
