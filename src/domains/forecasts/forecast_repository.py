@@ -197,5 +197,5 @@ class ForecastRepository(IForecastRepository):
         if response.status_code != 200:
             raise HTTPException(
                 status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail="Outbound Error: " + response.url,
+                detail="Outbound Error: " + url + " " + json.dumps(payload),
             )
