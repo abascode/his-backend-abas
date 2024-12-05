@@ -511,7 +511,11 @@ class ForecastUseCase(IForecastUseCase):
 
         for i in forecast.details:
             if i.deletable == 0:
-                temp = {"RECORD_ID": forecast.id, "DEALER_FORECAST_ID": i.id}
+                temp = {
+                    "RECORD_ID": forecast.id,
+                    "DEALER_FORECAST_ID": i.id,
+                    "MODEL_VARIANT": i.model_id,
+                }
                 for j in i.months:
                     if j.deletable == 0:
                         temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = j.hmsi_allocation
