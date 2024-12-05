@@ -191,7 +191,7 @@ class ForecastUseCase(IForecastUseCase):
     def convert_request_to_detail(
         self, request: Request, detail: dict
     ) -> ForecastDetail:
-        pattern = r"n(\d+)_(rs_gov|ws_gov|rs_priv|ws_priv|total_rs|prev_rs_gov|prev_rs_priv|total_prev_rs|total_ws|new_ws_req|hmsi_allocation)"
+        pattern = r"n(\d+)_(rs_gov|ws_gov|rs_priv|ws_priv|total_rs|prev_rs_gov|prev_rs_priv|total_prev_rs|total_ws|new_ws_req|hmsi_allocation)$"
         months_map: Dict[str, ForecastDetailMonth] = {}
         for k, v in detail.items():
             match = re.match(pattern, k)
