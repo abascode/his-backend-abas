@@ -86,7 +86,7 @@ class ForecastUseCase(IForecastUseCase):
         forecast.month = create_forecast_request.month
 
         new_details: Dict[str, ForecastDetail] = {
-            i["dealer_forecast_id"]: self.convert_request_to_detail(request, i)
+            i["record_id"]: self.convert_request_to_detail(request, i)
             for i in create_forecast_request.details
         }
 
@@ -464,8 +464,8 @@ class ForecastUseCase(IForecastUseCase):
             detail_map[detail.id] = detail
 
         for request_detail in confirm_request.data:
-            if request_detail["dealer_forecast_id"] in detail_map:
-                i = detail_map[request_detail["dealer_forecast_id"]]
+            if request_detail["record_id"] in detail_map:
+                i = detail_map[request_detail["record_id"]]
                 if i.model_id == request_detail["model_variant"]:
                     pattern = r"n(\d+)_(ws_gov_conf|ws_priv_conf|total_ws_conf)"
                     detail_months_map = {}
@@ -481,7 +481,7 @@ class ForecastUseCase(IForecastUseCase):
                             if match.group(2) == "total_ws_conf":
                                 detail_months_map[match.group(1)]["total_ws_conf"] = v
 
-                    for j in detail_map[request_detail["dealer_forecast_id"]].months:
+                    for j in detail_map[request_detail["record_id"]].months:
                         if str(j.forecast_month) in detail_months_map:
                             j.confirmed_total_ws = detail_months_map[
                                 str(j.forecast_month)
