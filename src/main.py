@@ -38,59 +38,59 @@ app.add_middleware(
 app.add_middleware(DatabaseMiddleware)
 
 
-# @app.exception_handler(RequestValidationError)
-# async def validation_exception_handler(
-#     request: Request, exc: RequestValidationError
-# ) -> JSONResponse:
-#     rollback_all(request)
-#     return JSONResponse(
-#         status_code=http.HTTPStatus.BAD_REQUEST,
-#         content=jsonable_encoder(
-#             {
-#                 "error": " ".join([str(i) for i in exc.errors()[0]["loc"]])
-#                 + " "
-#                 + exc.errors()[0]["msg"],
-#                 "status_code": http.HTTPStatus.BAD_REQUEST,
-#             }
-#         ),
-#     )
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    rollback_all(request)
+    return JSONResponse(
+        status_code=http.HTTPStatus.BAD_REQUEST,
+        content=jsonable_encoder(
+            {
+                "error": " ".join([str(i) for i in exc.errors()[0]["loc"]])
+                + " "
+                + exc.errors()[0]["msg"],
+                "status_code": http.HTTPStatus.BAD_REQUEST,
+            }
+        ),
+    )
 
 
-# @app.exception_handler(ValidationError)
-# async def validation_exception_handler(
-#     request: Request, exc: ValidationError
-# ) -> JSONResponse:
-#     rollback_all(request)
-#     err = " ".join([str(i) for i in exc.errors()[0]["loc"]])
-#     return JSONResponse(
-#         status_code=http.HTTPStatus.BAD_REQUEST,
-#         content=jsonable_encoder(
-#             {
-#                 "error": err + ": " + exc.errors()[0]["msg"],
-#                 "status_code": http.HTTPStatus.BAD_REQUEST,
-#             }
-#         ),
-#     )
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(
+    request: Request, exc: ValidationError
+) -> JSONResponse:
+    rollback_all(request)
+    err = " ".join([str(i) for i in exc.errors()[0]["loc"]])
+    return JSONResponse(
+        status_code=http.HTTPStatus.BAD_REQUEST,
+        content=jsonable_encoder(
+            {
+                "error": err + ": " + exc.errors()[0]["msg"],
+                "status_code": http.HTTPStatus.BAD_REQUEST,
+            }
+        ),
+    )
 
-#
-# @app.exception_handler(StarletteHTTPException)
-# async def http_exception_handler(
-#     request: Request, exc: StarletteHTTPException
-# ) -> JSONResponse:
-#     rollback_all(request)
-#     return JSONResponse(
-#         status_code=exc.status_code,
-#         content=jsonable_encoder({"error": exc.detail, "status_code": exc.status_code}),
-#     )
-#
-#
-# @app.exception_handler(500)
-# async def internal_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-#     rollback_all(request)
-#     return JSONResponse(
-#         status_code=500,
-#         content=jsonable_encoder({"status_code": 500, "error": str(exc)}),
-#     )
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+) -> JSONResponse:
+    rollback_all(request)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=jsonable_encoder({"error": exc.detail, "status_code": exc.status_code}),
+    )
+
+
+@app.exception_handler(500)
+async def internal_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    rollback_all(request)
+    return JSONResponse(
+        status_code=500,
+        content=jsonable_encoder({"status_code": 500, "error": str(exc)}),
+    )
 
 
 @app.get(
