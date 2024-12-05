@@ -19,8 +19,7 @@ class GetCalculationDetailResponse(BaseModel):
 
 
 class GetCalculationDetailMonthsResponse(BaseModel):
-    id: str
-    name: str
+    model_id: str
     months: List[GetCalculationDetailResponse]
 
 

@@ -42,6 +42,7 @@ def upsert_take_off_data(
 
     return NoDataResponse(message="Success uploading take off data!")
 
+
 @router.post(
     # temporary
     "/booking",
@@ -58,20 +59,18 @@ def upsert_soa_bo_oc_booking_data(
 ) -> NoDataResponse:
     calculation_uc.upsert_bo_soa_oc_booking_prospect(request, file, month, year)
 
+
 @router.get(
     "",
     response_model=BasicResponse[GetCalculationResponse],
     summary="Get calculation detail",
-    description="Get calculation details"
+    description="Get calculation details",
 )
 def get_calculation_detail(
     request: Request,
     get_calculation_request: GetCalculationRequest = Depends(),
-    calculation_uc: ICalculationUseCase = Depends(CalculationUseCase)
-)-> BasicResponse[GetCalculationRequest]:
+    calculation_uc: ICalculationUseCase = Depends(CalculationUseCase),
+) -> BasicResponse[GetCalculationRequest]:
     data = calculation_uc.get_calculation_detail(request, get_calculation_request)
-    
-    return BasicResponse(
-        data = data,
-        message = "Success getting calculation detail"
-    )
+
+    return BasicResponse(data=data, message="Success getting calculation detail")
