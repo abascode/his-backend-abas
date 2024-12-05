@@ -15,6 +15,7 @@ from src.domains.calculations.entities.va_slot_calculations import SlotCalculati
 from src.domains.masters.master_interface import IMasterRepository
 from src.domains.masters.master_repository import MasterRepository
 from src.models.requests.calculation_request import GetCalculationRequest
+from src.models.responses.basic_response import TextValueResponse
 from src.models.responses.calculation_response import (
     GetCalculationDetailResponse,
     GetCalculationResponse,
@@ -195,7 +196,14 @@ class CalculationUseCase(ICalculationUseCase):
         for i in slot_calculation.details:
             if i.model_id not in model_map:
                 model_map[i.model_id] = GetCalculationDetailMonthsResponse(
-                    model_id=i.model_id, months=[]
+                    model_id=i.model_id,
+                    months=[],
+                    segment=TextValueResponse(
+                        text=i.model.category_id, value=i.model.category_id
+                    ),
+                    category=TextValueResponse(
+                        text=i.model.segment_id, value=i.model.segment_id
+                    ),
                 )
 
             model_map[i.model_id].months.append(

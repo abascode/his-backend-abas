@@ -1,6 +1,7 @@
 from typing import List
 from pydantic import BaseModel
 
+from src.models.responses.basic_response import TextValueResponse
 from src.models.responses.master_response import ModelResponse, SegmentResponse
 
 
@@ -20,6 +21,8 @@ class GetCalculationDetailResponse(BaseModel):
 
 class GetCalculationDetailMonthsResponse(BaseModel):
     model_id: str
+    segment: TextValueResponse
+    category: TextValueResponse
     months: List[GetCalculationDetailResponse]
 
 
