@@ -235,7 +235,7 @@ class ForecastUseCase(IForecastUseCase):
         return ForecastDetail(
             model_id=detail["model_variant"],
             end_stock=detail["end_stock"],
-            id=detail["dealer_forecast_id"],
+            id=detail["record_id"],
             months=[i for i in months_map.values()],
         )
 
