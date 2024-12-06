@@ -179,11 +179,7 @@ class ForecastRepository(IForecastRepository):
         payload: dict,
     ):
         config = get_config()
-        url = config.outbound[
-            "hoyu"
-        ].base_url + "/ords/hmsi/dealer_forcast/allocation?month={}&year={}".format(
-            month, year
-        )
+        url = config.outbound["hoyu"].base_url + "/ords/hmsi/dealer_forcast/allocation"
 
         response = requests.post(
             url,
