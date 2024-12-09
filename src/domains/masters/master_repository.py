@@ -18,16 +18,24 @@ class MasterRepository(IMasterRepository):
         self.va_db = va_db
 
     def get_va_db(self, request: Request) -> Session:
-        return (
-            request.state.va_db if request.state.va_db is not None else self.va_db
-        )
-        
+        return request.state.va_db if request.state.va_db is not None else self.va_db
+
     def find_model_by_variant(self, request: Request, variant: str) -> Model | None:
-        return self.get_va_db(request).query(Model).filter(Model.variant == variant).first()
-        
+        return (
+            self.get_va_db(request)
+            .query(Model)
+            .filter(Model.variant == variant)
+            .first()
+        )
+
     def find_category(self, request: Request, category_id: str) -> Model | None:
-        return self.get_va_db(request).query(Category).filter(Category.id == category_id).first()
-    
+        return (
+            self.get_va_db(request)
+            .query(Category)
+            .filter(Category.id == category_id)
+            .first()
+        )
+
     def find_model(self, request: Request, model_id: str) -> Model | None:
         return self.get_va_db(request).query(Model).filter(Model.id == model_id).first()
 
@@ -41,7 +49,7 @@ class MasterRepository(IMasterRepository):
         else:
             temp.name = dealer.name
         return dealer
-    
+
     def find_dealer_by_name(self, request: Request, name: str) -> Dealer | None:
         return self.get_va_db(request).query(Dealer).filter(Dealer.name == name).first()
 
@@ -65,8 +73,9 @@ class MasterRepository(IMasterRepository):
         if model is not None:
             return model
 
-
-    def get_order_configuration(self, request: Request, month: int, year: int) -> List[OrderConfiguration]:
+    def get_order_configuration(
+        self, request: Request, month: int, year: int
+    ) -> List[OrderConfiguration]:
         order = (
             self.get_va_db(request)
             .query(OrderConfiguration)
@@ -75,7 +84,9 @@ class MasterRepository(IMasterRepository):
         )
         return order
 
-    def get_stock_pilots(self, request: Request, month: int, year: int) -> List[StockPilot]:
+    def get_stock_pilots(
+        self, request: Request, month: int, year: int
+    ) -> List[StockPilot]:
         stock_pilots = (
             self.get_va_db(request)
             .query(StockPilot)
