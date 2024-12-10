@@ -199,10 +199,10 @@ class CalculationUseCase(ICalculationUseCase):
                     model_id=i.model_id,
                     months=[],
                     segment=TextValueResponse(
-                        text=i.model.category_id, value=i.model.category_id
+                        text=i.model.segment_id, value=i.model.segment_id
                     ),
                     category=TextValueResponse(
-                        text=i.model.segment_id, value=i.model.segment_id
+                        text=i.model.category_id, value=i.model.category_id
                     ),
                 )
 

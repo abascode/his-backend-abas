@@ -1,20 +1,22 @@
 from pydantic import BaseModel
 
+from src.models.responses.basic_response import TextValueResponse
+
 
 class OrderConfigurationsResponse(BaseModel):
     category_id: str
     forecast_percentage: int
     urgent_percentage: int
 
-class StockPilotsResponse(BaseModel):
-    segment_id: str
-    percentage: int
-    
+
 class CategoryResponse(BaseModel):
     id: str
-    
+
+
 class SegmentResponse(BaseModel):
     id: str
+
+
 class ModelResponse(BaseModel):
     id: str
     manufacturer_code: str
@@ -24,3 +26,7 @@ class ModelResponse(BaseModel):
     usage: str
     euro: str
 
+
+class StockPilotsResponse(BaseModel):
+    segment: TextValueResponse
+    percentage: int
