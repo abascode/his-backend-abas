@@ -92,6 +92,10 @@ class ForecastRepository(IForecastRepository):
                 literal(0).label("order_confirmation"),
             )
             .filter(Forecast.deletable == 0)
+            .group_by(
+                Forecast.month,
+                Forecast.year,
+            )
         )
 
         if (
