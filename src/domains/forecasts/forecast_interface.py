@@ -9,6 +9,7 @@ from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
+from src.models.requests.allocation_request import GetAllocationRequest
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
@@ -16,6 +17,7 @@ from src.models.requests.forecast_request import (
     ConfirmForecastRequest,
     ApprovalAllocationRequest,
 )
+from src.models.responses.allocation_response import GetAllocationResponse
 from src.models.responses.forecast_response import (
     GetForecastSummaryResponse,
     GetForecastResponse,
@@ -60,6 +62,12 @@ class IForecastUseCase:
     ) -> None:
         pass
 
+    @abc.abstractmethod
+    def get_allocation(
+        self, request: Request, get_allocation_request: GetAllocationRequest
+    ) -> GetAllocationResponse:
+        pass
+
 
 class IForecastRepository:
     @abc.abstractmethod
@@ -75,6 +83,17 @@ class IForecastRepository:
         month: int = None,
         year: int = None,
     ) -> Forecast | None:
+        pass
+
+    @abc.abstractmethod
+    def get_forecast(
+        self,
+        request: Request,
+        forecast_id: str = None,
+        dealer_id: str = None,
+        month: int = None,
+        year: int = None,
+    ) -> List[Forecast] | None:
         pass
 
     @abc.abstractmethod

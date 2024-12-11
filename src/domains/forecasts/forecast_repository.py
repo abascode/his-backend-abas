@@ -66,6 +66,30 @@ class ForecastRepository(IForecastRepository):
 
         return query.first()
 
+    def get_forecast(
+        self,
+        request: Request,
+        forecast_id: str = None,
+        dealer_id: str = None,
+        month: int = None,
+        year: int = None,
+    ) -> List[Forecast]:
+        query = self.get_va_db(request).query(Forecast).filter(Forecast.deletable == 0)
+
+        if forecast_id is not None:
+            query = query.filter(Forecast.id == forecast_id)
+
+        if dealer_id is not None:
+            query = query.filter(Forecast.dealer_id == dealer_id)
+
+        if month is not None:
+            query = query.filter(Forecast.month == month)
+
+        if year is not None:
+            query = query.filter(Forecast.year == year)
+
+        return query.all()
+
     def create_forecast_detail(
         self, request: Request, forecast_detail: ForecastDetail
     ) -> None:

@@ -9,6 +9,8 @@ from fastapi import Depends, HTTPException, UploadFile
 import openpyxl
 from starlette.requests import Request
 
+from src.domains.calculations.calculation_interface import ICalculationRepository
+from src.domains.calculations.calculation_repository import CalculationRepository
 from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
@@ -22,12 +24,18 @@ from src.domains.forecasts.forecast_repository import ForecastRepository
 from src.domains.masters.entities.va_dealers import Dealer
 from src.domains.masters.master_interface import IMasterRepository
 from src.domains.masters.master_repository import MasterRepository
+from src.models.requests.allocation_request import GetAllocationRequest
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
     GetForecastDetailRequest,
     ConfirmForecastRequest,
     ApprovalAllocationRequest,
+)
+from src.models.responses.allocation_response import (
+    GetAllocationResponse,
+    AllocationAdjustmentResponse,
+    AllocationAdjustmentMonthResponse,
 )
 from src.models.responses.basic_response import TextValueResponse
 from src.models.responses.forecast_response import (
@@ -54,9 +62,11 @@ class ForecastUseCase(IForecastUseCase):
         self,
         forecast_repo: IForecastRepository = Depends(ForecastRepository),
         master_repo: IMasterRepository = Depends(MasterRepository),
+        calculation_repo: ICalculationRepository = Depends(CalculationRepository),
     ):
         self.forecast_repo = forecast_repo
         self.master_repo = master_repo
+        self.calculation_repo = calculation_repo
 
     def upsert_forecast(
         self, request: Request, create_forecast_request: CreateForecastRequest
@@ -524,3 +534,58 @@ class ForecastUseCase(IForecastUseCase):
         self.forecast_repo.approve_allocation_data(
             request, payload, approval_request.month, approval_request.year
         )
+
+    def get_allocation(
+        self, request: Request, get_allocation_request: GetAllocationRequest
+    ) -> GetAllocationResponse:
+        forecasts = self.forecast_repo.get_forecast(
+            request,
+            month=get_allocation_request.month,
+            year=get_allocation_request.year,
+        )
+
+        dealer_dict = {}
+        models = []
+        calculations = self.calculation_repo.find_calculation(
+            request,
+            month=get_allocation_request.month,
+            year=get_allocation_request.year,
+        )
+
+        total_all_ws = 0
+
+        for i in forecasts:
+            months: List[AllocationAdjustmentResponse] = []
+            dealer_dict = [i.dealer] = {}
+
+            for j in i.details:
+                if j.deletable == 1:
+                    pass
+
+                models.append(j.model_id)
+                dealer_dict[i.dealer][j.model_id] = {}
+
+                for k in j.months:
+                    k: ForecastDetailMonth = k
+                    adjustment = AllocationAdjustmentMonthResponse(
+                        month=k.forecast_month,
+                        adjustment=k.adjustment,
+                        ws=k.total_ws,
+                        ws_percentage=0,
+                        allocation=0,
+                        confirmed_total_ws=k.confirmed_total_ws,
+                    )
+                    total_all_ws += k.total_ws
+                    # dealer_dict[i.dealer][j.model_id] =
+
+                adjustment = AllocationAdjustmentResponse(
+                    model=TextValueResponse(), category=TextValueResponse(), months=[]
+                )
+
+            allocation = GetAllocationResponse(
+                dealer=TextValueResponse(text=i.dealer.name, value=i.dealer.name),
+                adjustments=[],
+                monthly_targets=[],
+            )
+
+        return GetAllocationResponse(data=forecast.details)

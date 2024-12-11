@@ -6,6 +6,7 @@ from starlette.requests import Request
 from src.dependencies.auth_dependency import api_key_auth
 from src.domains.forecasts.forecast_interface import IForecastUseCase
 from src.domains.forecasts.forecast_usecase import ForecastUseCase
+from src.models.requests.allocation_request import GetAllocationRequest
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
@@ -126,3 +127,20 @@ def approve_forecast(
     approval_uc.approve_allocation(request, approval_request)
 
     return NoDataResponse(message="Success approving allocation data")
+
+
+@router.get(
+    "/allocations",
+    response_model=NoDataResponse,
+    summary="Approve Allocation",
+    description="Approve Allocation",
+    dependencies=[Depends(api_key_auth)],
+)
+def get_allocations(
+    request: Request,
+    query: GetAllocationRequest = Depends(),
+    uc: IForecastUseCase = Depends(ForecastUseCase),
+) -> NoDataResponse:
+    uc.approve_allocation(request, approval_request)
+
+    return NoDataResponse(message="Success getting allocation data")

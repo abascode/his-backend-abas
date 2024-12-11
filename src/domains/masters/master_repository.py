@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -9,6 +9,7 @@ from src.domains.masters.entities.va_categories import Category
 from src.domains.masters.entities.va_dealers import Dealer
 from src.domains.masters.entities.va_models import Model
 from src.domains.masters.entities.va_order_configurations import OrderConfiguration
+from src.domains.masters.entities.va_segments import Segment
 from src.domains.masters.entities.va_stock_pilots import StockPilot
 from src.domains.masters.master_interface import IMasterRepository
 
@@ -18,16 +19,24 @@ class MasterRepository(IMasterRepository):
         self.va_db = va_db
 
     def get_va_db(self, request: Request) -> Session:
-        return (
-            request.state.va_db if request.state.va_db is not None else self.va_db
-        )
-        
+        return request.state.va_db if request.state.va_db is not None else self.va_db
+
     def find_model_by_variant(self, request: Request, variant: str) -> Model | None:
-        return self.get_va_db(request).query(Model).filter(Model.variant == variant).first()
-        
+        return (
+            self.get_va_db(request)
+            .query(Model)
+            .filter(Model.variant == variant)
+            .first()
+        )
+
     def find_category(self, request: Request, category_id: str) -> Model | None:
-        return self.get_va_db(request).query(Category).filter(Category.id == category_id).first()
-    
+        return (
+            self.get_va_db(request)
+            .query(Category)
+            .filter(Category.id == category_id)
+            .first()
+        )
+
     def find_model(self, request: Request, model_id: str) -> Model | None:
         return self.get_va_db(request).query(Model).filter(Model.id == model_id).first()
 
@@ -41,7 +50,7 @@ class MasterRepository(IMasterRepository):
         else:
             temp.name = dealer.name
         return dealer
-    
+
     def find_dealer_by_name(self, request: Request, name: str) -> Dealer | None:
         return self.get_va_db(request).query(Dealer).filter(Dealer.name == name).first()
 
@@ -55,18 +64,17 @@ class MasterRepository(IMasterRepository):
         if dealer is not None:
             return dealer
 
-    def get_model_options(self, request: Request, search: str) -> List[Model]:
-        model = (
+    def get_model_options(self, request: Request, search: str) -> list[Type[Model]]:
+        return (
             self.get_va_db(request)
             .query(Model)
             .filter(Model.id.ilike("%" + search + "%"))
             .all()
         )
-        if model is not None:
-            return model
 
-
-    def get_order_configuration(self, request: Request, month: int, year: int) -> List[OrderConfiguration]:
+    def get_order_configuration(
+        self, request: Request, month: int, year: int
+    ) -> List[OrderConfiguration]:
         order = (
             self.get_va_db(request)
             .query(OrderConfiguration)
@@ -75,7 +83,9 @@ class MasterRepository(IMasterRepository):
         )
         return order
 
-    def get_stock_pilots(self, request: Request, month: int, year: int) -> List[StockPilot]:
+    def get_stock_pilots(
+        self, request: Request, month: int, year: int
+    ) -> List[StockPilot]:
         stock_pilots = (
             self.get_va_db(request)
             .query(StockPilot)
@@ -83,3 +93,21 @@ class MasterRepository(IMasterRepository):
             .all()
         )
         return stock_pilots
+
+    def get_segment_options(self, request: Request, search: str) -> list[Type[Segment]]:
+        return (
+            self.get_va_db(request)
+            .query(Segment)
+            .filter(Segment.id.ilike("%" + search + "%"))
+            .all()
+        )
+
+    def get_category_options(
+        self, request: Request, search: str
+    ) -> list[Type[Category]]:
+        return (
+            self.get_va_db(request)
+            .query(Category)
+            .filter(Category.id.ilike("%" + search + "%"))
+            .all()
+        )

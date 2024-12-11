@@ -15,6 +15,7 @@ from src.dependencies.database_dependency import get_va_db
 from src.domains.users.user_http import router as user_router
 from src.domains.forecasts.forecast_http import router as forecast_router
 from src.domains.calculations.calculation_http import router as calculation_router
+from src.domains.allocations.allocation_http import router as allocation_router
 
 from src.domains.masters.master_http import router as master_router
 from src.shared.middlewares.database_middleware import DatabaseMiddleware
@@ -115,3 +116,4 @@ app.include_router(user_router)
 app.include_router(forecast_router)
 app.include_router(calculation_router)
 app.include_router(master_router)
+app.include_router(allocation_router)
