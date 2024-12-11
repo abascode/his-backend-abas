@@ -1,11 +1,35 @@
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from src.shared.entities.migrations import BaseModel
-import alembic_postgresql_enum
+from alembic import context
+
+from src.shared.entities.basemodel import BaseModel
+from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
+from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
+from src.domains.forecasts.entities.va_forecasts import Forecast
+from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
+from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
+
+from src.domains.masters.entities.va_dealers import Dealer
+from src.domains.masters.entities.va_models import Model
+from src.domains.masters.entities.va_segments import Segment
+from src.domains.masters.entities.va_categories import Category
+from src.domains.masters.entities.va_stock_pilots import StockPilot
+from src.domains.masters.entities.va_order_configurations import OrderConfiguration
+
+from src.domains.calculations.entities.va_slot_calculations import SlotCalculation
+from src.domains.calculations.entities.va_slot_calculation_details import (
+    SlotCalculationDetail,
+)
+from src.domains.calculations.entities.va_slot_calculation_order_configuration import (
+    SlotCalculationOrderConfiguration,
+)
+from src.domains.calculations.entities.va_slot_calculation_stock_pilots import (
+    SlotCalculationStockPilot,
+)
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
