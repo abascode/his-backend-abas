@@ -5,8 +5,13 @@ import requests
 from typing import List
 
 from fastapi import Depends, HTTPException
-from sqlalchemy import text, literal
-from sqlalchemy.orm import Session
+from sqlalchemy import (
+    func,
+    and_,
+    extract,
+    case,
+)
+from sqlalchemy.orm import Session, aliased
 from starlette.requests import Request
 
 from src.config.config import get_config
@@ -17,6 +22,8 @@ from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.forecast_interface import IForecastRepository
+from src.domains.masters.entities.va_dealers import Dealer
+from src.domains.masters.entities.va_order_configurations import OrderConfiguration
 from src.models.requests.forecast_request import (
     GetForecastSummaryRequest,
     ApprovalAllocationRequest,
@@ -82,14 +89,49 @@ class ForecastRepository(IForecastRepository):
         self, request: Request, get_summary_request: GetForecastSummaryRequest
     ) -> tuple[List[GetForecastSummaryResponse], int]:
 
+        total_dealer = (
+            self.get_va_db(request).query(func.count(Dealer.id)).scalar_subquery()
+        )
+
+        dealer_submit = (
+            self.get_va_db(request)
+            .query(func.count().label("dealer_submit"))
+            .select_from(Dealer)
+            .join(Forecast, Dealer.id == Forecast.dealer_id)
+            .filter(
+                and_(
+                    extract("month", Dealer.created_at) <= Forecast.month,
+                    extract("year", Dealer.created_at) <= Forecast.year,
+                )
+            )
+            .group_by(Forecast.month, Forecast.year)
+            .subquery()
+        )
+
+        order_confirmation = (
+            self.get_va_db(request)
+            .query(func.count().label("total_oc"))
+            .select_from(ForecastDetailMonth)
+            .join(
+                ForecastDetail,
+                ForecastDetailMonth.forecast_detail_id == ForecastDetail.id,
+            )
+            .join(Forecast, ForecastDetail.forecast_id == Forecast.id)
+            .filter(ForecastDetailMonth.confirmed_total_ws.isnot(None))
+            .group_by(Forecast.month, Forecast.year)
+            .subquery()
+        )
+
         query = (
             self.get_va_db(request)
             .query(
                 Forecast.month.label("month"),
                 Forecast.year.label("year"),
-                literal(0).label("dealer_submit"),
-                literal(0).label("remaining_dealer_submit"),
-                literal(0).label("order_confirmation"),
+                func.sum(dealer_submit.c.dealer_submit).label("dealer_submit"),
+                (total_dealer - func.sum(dealer_submit.c.dealer_submit)).label(
+                    "remaining_dealer_submit"
+                ),
+                func.sum(order_confirmation.c.total_oc).label("order_confirmation"),
             )
             .filter(Forecast.deletable == 0)
             .group_by(
