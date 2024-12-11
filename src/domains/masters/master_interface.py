@@ -85,10 +85,6 @@ class IMasterRepository:
         pass
 
     @abc.abstractmethod
-    def get_segment_options(self, request: Request, search: str) -> list[Type[Segment]]:
-        pass
-
-    @abc.abstractmethod
     def get_category_options(
         self, request: Request, search: str
     ) -> list[Type[Category]]:

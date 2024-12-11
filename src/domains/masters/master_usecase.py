@@ -79,7 +79,7 @@ class MasterUseCase(IMasterUseCase):
 
         return [
             StockPilotsResponse(
-                segment_id=i.segment_id,
+                segment=TextValueResponse(text=i.segment_id, value=i.segment_id),
                 percentage=i.percentage,
             )
             for i in stock_pilots
@@ -108,3 +108,4 @@ class MasterUseCase(IMasterUseCase):
             )
             for i in categories
         ]
+

@@ -76,41 +76,7 @@ def get_order_configuration(
 def get_stock_pilots(
     request: Request,
     stock_pilots_request: GetStockPilotRequest = Depends(),
-    order_config_uc: IMasterUseCase = Depends(MasterUseCase),
+    stock_pilot_uc: IMasterUseCase = Depends(MasterUseCase),
 ) -> ListResponse[StockPilotsResponse]:
-    stock_pilots = order_config_uc.get_order_configuration(
-        request, stock_pilots_request
-    )
-    return ListResponse(
-        data=stock_pilots, message="Success Fetching Orders Configuration"
-    )
-
-
-@router.get(
-    "/categories/options",
-    response_model=ListResponse[TextValueResponse],
-    summary="Get Category Options",
-    description="Get category options",
-)
-def get_category_options(
-    request: Request,
-    search: str | None = "",
-    uc: IMasterUseCase = Depends(MasterUseCase),
-) -> ListResponse[TextValueResponse]:
-    models = uc.get_category_options(request, search)
-    return ListResponse(data=models, message="Success Fetching Category Options")
-
-
-@router.get(
-    "/segments/options",
-    response_model=ListResponse[TextValueResponse],
-    summary="Get Segment Options",
-    description="Get segment options",
-)
-def get_segment_options(
-    request: Request,
-    search: str | None = "",
-    uc: IMasterUseCase = Depends(MasterUseCase),
-) -> ListResponse[TextValueResponse]:
-    models = uc.get_segment_options(request, search)
-    return ListResponse(data=models, message="Success Fetching Segment Options")
+    stock_pilots = stock_pilot_uc.get_stock_pilots(request, stock_pilots_request)
+    return ListResponse(data=stock_pilots, message="Success Fetching Stock Pilot")
