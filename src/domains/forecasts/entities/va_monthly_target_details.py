@@ -18,7 +18,7 @@ class MonthlyTargetDetail(BaseModel):
         nullable=False,
     )
     forecast_month: MappedColumn[int] = mapped_column(
-        String, primary_key=True, nullable=False
+        Integer, primary_key=True, nullable=False
     )
     dealer_id: MappedColumn[str] = mapped_column(
         String,

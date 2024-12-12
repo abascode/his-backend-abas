@@ -16,7 +16,10 @@ from src.models.requests.forecast_request import (
     ConfirmForecastRequest,
     ApprovalAllocationRequest,
 )
-from src.models.responses.allocation_response import GetAllocationResponse
+from src.models.responses.allocation_response import (
+    GetAllocationAdjustmentResponse,
+    GetAllocationResponse,
+)
 from src.models.responses.basic_response import (
     BasicResponse,
     ListResponse,
@@ -25,7 +28,7 @@ from src.models.responses.basic_response import (
 router = APIRouter(prefix="/api/allocations", tags=["Allocation"])
 
 
-@router.get("", response_model=ListResponse[GetAllocationResponse])
+@router.get("", response_model=BasicResponse[GetAllocationResponse])
 def get_allocation_detail(
     request: Request,
     get_allocation_request: GetAllocationRequest = Depends(),
@@ -33,4 +36,4 @@ def get_allocation_detail(
 ):
     res = allocation_uc.get_allocations(request, get_allocation_request)
 
-    return ListResponse(data=res, message="Success getting forecast detail")
+    return BasicResponse(data=res, message="Success getting allocation")

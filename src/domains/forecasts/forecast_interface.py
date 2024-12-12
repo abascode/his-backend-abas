@@ -17,7 +17,7 @@ from src.models.requests.forecast_request import (
     ConfirmForecastRequest,
     ApprovalAllocationRequest,
 )
-from src.models.responses.allocation_response import GetAllocationResponse
+from src.models.responses.allocation_response import GetAllocationAdjustmentResponse
 from src.models.responses.forecast_response import (
     GetForecastSummaryResponse,
     GetForecastResponse,
@@ -65,7 +65,7 @@ class IForecastUseCase:
     @abc.abstractmethod
     def get_allocation(
         self, request: Request, get_allocation_request: GetAllocationRequest
-    ) -> GetAllocationResponse:
+    ) -> GetAllocationAdjustmentResponse:
         pass
 
 

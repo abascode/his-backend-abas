@@ -33,8 +33,8 @@ from src.models.requests.forecast_request import (
     ApprovalAllocationRequest,
 )
 from src.models.responses.allocation_response import (
-    GetAllocationResponse,
-    AllocationAdjustmentResponse,
+    GetAllocationAdjustmentResponse,
+    AllocationAdjustmentModelResponse,
     AllocationAdjustmentMonthResponse,
 )
 from src.models.responses.basic_response import TextValueResponse
@@ -537,7 +537,7 @@ class ForecastUseCase(IForecastUseCase):
 
     def get_allocation(
         self, request: Request, get_allocation_request: GetAllocationRequest
-    ) -> GetAllocationResponse:
+    ) -> GetAllocationAdjustmentResponse:
         forecasts = self.forecast_repo.get_forecast(
             request,
             month=get_allocation_request.month,
@@ -555,7 +555,7 @@ class ForecastUseCase(IForecastUseCase):
         total_all_ws = 0
 
         for i in forecasts:
-            months: List[AllocationAdjustmentResponse] = []
+            months: List[AllocationAdjustmentModelResponse] = []
             dealer_dict = [i.dealer] = {}
 
             for j in i.details:
@@ -578,14 +578,14 @@ class ForecastUseCase(IForecastUseCase):
                     total_all_ws += k.total_ws
                     # dealer_dict[i.dealer][j.model_id] =
 
-                adjustment = AllocationAdjustmentResponse(
+                adjustment = AllocationAdjustmentModelResponse(
                     model=TextValueResponse(), category=TextValueResponse(), months=[]
                 )
 
-            allocation = GetAllocationResponse(
+            allocation = GetAllocationAdjustmentResponse(
                 dealer=TextValueResponse(text=i.dealer.name, value=i.dealer.name),
                 adjustments=[],
                 monthly_targets=[],
             )
 
-        return GetAllocationResponse(data=forecast.details)
+        return GetAllocationAdjustmentResponse(data=forecast.details)

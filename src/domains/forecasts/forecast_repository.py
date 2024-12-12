@@ -190,19 +190,6 @@ class ForecastRepository(IForecastRepository):
             for month, year, dealer_submit, remaining_dealer_submit, order_confirmation in res
         ], cnt
 
-    def find_forecast_detail(
-        self, request: Request, month: int, year: int, dealer_id: str
-    ) -> ForecastDetail | None:
-        return (
-            self.get_va_db(request)
-            .query(ForecastDetail)
-            .filter(
-                ForecastDetail.forecast.month == month,
-                ForecastDetail.forecast.year == year,
-                ForecastDetail.dealer_id,
-            )
-        )
-
     def find_monthly_target(
         self,
         request: Request,

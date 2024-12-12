@@ -5,8 +5,8 @@ from pydantic import BaseModel
 from src.models.responses.basic_response import TextValueResponse
 
 
-class AllocationTargetMonthCategoryResponse(BaseModel):
-    category: TextValueResponse
+class AllocationTargetMonthMonthResponse(BaseModel):
+    month: int
     target: int
     percentage: int  # persen dari total yang lain
     alloc_prev_month: int  # jumlah soa + oc
@@ -16,8 +16,13 @@ class AllocationTargetMonthCategoryResponse(BaseModel):
     vs_forecast: int  # total_alloc / ws * 100%
 
 
+class AllocationTargetMonthCategoryResponse(BaseModel):
+    category: TextValueResponse
+    months: List[AllocationTargetMonthMonthResponse]
+
+
 class AllocationTargetMonthResponse(BaseModel):
-    month: int
+    dealer: TextValueResponse
     categories: List[AllocationTargetMonthCategoryResponse]
 
 
@@ -30,13 +35,17 @@ class AllocationAdjustmentMonthResponse(BaseModel):
     confirmed_total_ws: int
 
 
-class AllocationAdjustmentResponse(BaseModel):
+class AllocationAdjustmentModelResponse(BaseModel):
     model: TextValueResponse
     category: TextValueResponse
     months: List[AllocationAdjustmentMonthResponse]
 
 
-class GetAllocationResponse(BaseModel):
+class GetAllocationAdjustmentResponse(BaseModel):
     dealer: TextValueResponse
-    adjustments: List[AllocationAdjustmentResponse]
-    monthly_targets: List[AllocationTargetMonthResponse]
+    models: List[AllocationAdjustmentModelResponse]
+
+
+class GetAllocationResponse(BaseModel):
+    adjustments: List[GetAllocationAdjustmentResponse]
+    targets: List[AllocationTargetMonthResponse]

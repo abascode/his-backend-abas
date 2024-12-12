@@ -142,7 +142,7 @@ def upgrade() -> None:
     op.create_table(
         "va_monthly_target_details",
         sa.Column("month_target_id", sa.String(), nullable=False),
-        sa.Column("forecast_month", sa.String(), nullable=False),
+        sa.Column("forecast_month", sa.Integer(), nullable=False),
         sa.Column("dealer_id", sa.String(), nullable=False),
         sa.Column("target", sa.Integer(), nullable=False),
         sa.Column("category_id", sa.String(), nullable=False),
