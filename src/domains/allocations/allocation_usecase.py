@@ -76,7 +76,6 @@ class AllocationUseCase(IAllocationUseCase):
                 adjustment_model,
                 ws,
                 ws_percentage,
-                unfinished_allocation,
                 allocation,
                 confirmed_total_ws,
             ) = i

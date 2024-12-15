@@ -32,214 +32,306 @@ class AllocationRepository(IAllocationRepository):
         self, request: Request, get_allocation_request: GetAllocationRequest
     ):
 
-        # forecast_detail_months_alias = aliased(ForecastDetailMonth)
-        # total_ws = (
-        #     self.get_va_db(request)
-        #     .query(sum(forecast_detail_months_alias.total_ws))
-        #     .correlate(Model, ForecastDetailMonth)
-        # )
-        #
-        # """
-        # CAST(CAST(coalesce((SELECT sum(va_forecast_detail_months_2.total_ws) AS sum_1
-        #                          FROM va_forecast_detail_months AS va_forecast_detail_months_2
-        #                          WHERE va_forecast_detail_months_2.forecast_month =
-        #                                va_forecast_detail_months_1.forecast_month
-        #                            AND
-        #                              va_forecast_detail_months_2.forecast_detail_id IN (SELECT va_forecast_details_1.id
-        #                                                                                 FROM va_forecast_details AS va_forecast_details_1,
-        #                                                                                      va_models AS va_models_1
-        #                                                                                 WHERE va_forecast_details_1.model_id = va_models_1.id
-        #                                                                                   AND
-        #                                                                                     va_forecast_details_1.forecast_id IN
-        #                                                                                     (SELECT va_forecasts_2.id
-        #                                                                                      FROM va_forecasts AS va_forecasts_2,
-        #                                                                                           va_forecasts AS va_forecasts_1
-        #                                                                                      WHERE va_forecasts_2.month = va_forecasts_1.month
-        #                                                                                        AND va_forecasts_2.year = va_forecasts_1.year))),
-        #                         0) AS FLOAT) AS FLOAT)
-        # """
-        #
-        # query = (
-        #     self.get_va_db(request)
-        #     .query(
-        #         Dealer.id,
-        #         Dealer.name,
-        #         Forecast.year,
-        #         Forecast.month,
-        #         Model.id,
-        #         Model.segment_id,
-        #         Model.category_id,
-        #         ForecastDetailMonth.forecast_month,
-        #         func.coalesce(ForecastDetailMonth.adjustment, 0),
-        #         func.coalesce(ForecastDetailMonth.total_ws, 0),
-        #     )
-        #     .join(Dealer, and_(Dealer.id == Forecast.id))
-        #     .join(
-        #         ForecastDetail,
-        #         and_(
-        #             ForecastDetail.forecast_id == Forecast.id,
-        #             ForecastDetail.deletable == 0,
-        #         ),
-        #     )
-        #     .join(
-        #         ForecastDetailMonth,
-        #         and_(
-        #             ForecastDetailMonth.forecast_detail_id == ForecastDetail.id,
-        #             ForecastDetailMonth.deletable == 0,
-        #         ),
-        #     )
-        #     .join(Model, and_(Model.id == ForecastDetail.model_id))
-        #     .join(
-        #         StockPilot,
-        #         and_(
-        #             StockPilot.segment_id == Model.segment_id,
-        #             StockPilot.month == Forecast.month,
-        #             StockPilot.year == Forecast.year,
-        #         ),
-        #     )
-        #     .join(
-        #         OrderConfiguration,
-        #         and_(
-        #             OrderConfiguration.month == Forecast.month,
-        #             OrderConfiguration.year == Forecast.year,
-        #             OrderConfiguration.category_id == Model.category_id,
-        #         ),
-        #     )
-        #     .join(
-        #         SlotCalculation,
-        #         and_(
-        #             SlotCalculation.year == Forecast.year,
-        #             SlotCalculation.month == Forecast.month,
-        #             SlotCalculation.deletable == 0,
-        #         ),
-        #         isouter=True,
-        #     )
-        #     .join(
-        #         SlotCalculationDetail,
-        #         and_(
-        #             SlotCalculation.id == SlotCalculationDetail.slot_calculation_id,
-        #             SlotCalculationDetail.model_id == Model.id,
-        #             SlotCalculationDetail.forecast_month
-        #             == ForecastDetailMonth.forecast_month,
-        #             SlotCalculationDetail.deletable == 0,
-        #         ),
-        #         isouter=True,
-        #     )
-        #     .group_by(Forecast.month, Forecast.year)
-        #     .order_by(
-        #         Dealer.id,
-        #         Model.category_id,
-        #         Model.id,
-        #         ForecastDetailMonth.forecast_month,
-        #     )
-        # ).all()
-
-        query = """
-select *, (unfinished_allocation * ws_percentage::double precision / 100)::int as allocation
-from (select va_dealers .id                                                                                      as dealer_id,
-             va_dealers.name                                                                                    as dealer,
-             va_forecasts.year                                                                                  as year,
-             va_forecasts.month                                                                                 as month,
-             va_models.id                                                                                       as model_id,
-             va_models.segment_id,
-             va_models.category_id,
-             va_forecast_detail_months.forecast_month,
-             coalesce(va_forecast_detail_months.adjustment, 0)                                                  as adjustment,
-             coalesce(va_forecast_detail_months.total_ws, 0)                                                    as ws,
-             (coalesce((coalesce(va_forecast_detail_months.total_ws, 0)::DOUBLE PRECISION /
-                        (NULLIF((select sum(coalesce(temp.total_ws, 0))
-                                 from va_forecast_detail_months temp
-                                 where temp.deletable = 0 and temp.forecast_month = va_forecast_detail_months.forecast_month
-                                   and temp.forecast_detail_id in (select id
-                                                                   from va_forecast_details vfd
-                                                                   where vfd.model_id = va_models.id and vfd.deletable = 0
-                                                                     and vfd.forecast_id in
-                                                                         (select id
-                                                                          from va_forecasts vf
-                                                                          where vf.month = va_forecasts.month
-                                                                            and vf.year = va_forecasts.year and vf.deletable = 0))),
-                                0))::DOUBLE PRECISION), 0) *
-              100)::int                                                                                         as ws_percentage,
-             (((coalesce(take_off, 0) - coalesce(bo, 0)) * coalesce(va_stock_pilots.percentage, 0) -
-               (coalesce(soa, 0) + coalesce(oc, 0) + coalesce(booking_prospect, 0))) * (coalesce(forecast_percentage,
-                                                                                                 0)::DOUBLE PRECISION /
-                                                                                        100)::double precision) as unfinished_allocation,
-             coalesce(va_forecast_detail_months.confirmed_total_ws, 0)
-      from va_forecasts
-               left join va_dealers on va_dealers.id = va_forecasts.dealer_id
-               left join va_forecast_details
-                         on va_forecasts.id = va_forecast_details.forecast_id and va_forecast_details.deletable = 0
-               left join va_forecast_detail_months
-                         on va_forecast_details.id = va_forecast_detail_months.forecast_detail_id and
-                            va_forecast_detail_months.deletable = 0
-               left join va_models on va_forecast_details.model_id = va_models.id
-               left join va_stock_pilots on va_stock_pilots.segment_id = va_models.segment_id and
-                                            va_stock_pilots.month = va_forecasts.month and
-                                            va_stock_pilots.year = va_forecasts.year
-               left join va_slot_calculations
-                         on va_slot_calculations.year = va_forecasts.year and
-                            va_forecasts.month = va_slot_calculations.month and va_slot_calculations.deletable = 0
-               left join va_order_configurations on va_order_configurations.month = va_forecasts.month and
-                                                    va_order_configurations.year = va_forecasts.year and
-                                                    va_order_configurations.category_id = va_models.category_id
-               left join va_slot_calculation_details
-                         on va_slot_calculations.id = va_slot_calculation_details.slot_calculation_id and
-                            va_models.id = va_slot_calculation_details.model_id and
-                            va_slot_calculation_details.forecast_month = va_forecast_detail_months.forecast_month and
-                            va_slot_calculation_details.deletable = 0
-      where va_forecasts.month = :month
-        and va_forecasts.year = :year) base;
-        """
-
-        res = self.get_va_db(request).execute(
-            text(query),
-            {
-                "month": get_allocation_request.month,
-                "year": get_allocation_request.year,
-            },
+        forecast_detail_months_alias = aliased(ForecastDetailMonth)
+        forecast_detail_alias = aliased(ForecastDetail)
+        forecast_alias = aliased(Forecast)
+        total_ws_alias = aliased(
+            self.get_va_db(request)
+            .query(
+                func.sum(forecast_detail_months_alias.total_ws).label("total_ws_sum"),
+                forecast_detail_alias.model_id.label("model_id"),
+                forecast_detail_months_alias.forecast_month.label("forecast_month"),
+                forecast_alias.year.label("year"),
+                forecast_alias.month.label("month"),
+            )
+            .join(
+                forecast_detail_alias,
+                and_(
+                    forecast_detail_alias.deletable == 0,
+                    forecast_detail_alias.id
+                    == forecast_detail_months_alias.forecast_detail_id,
+                ),
+            )
+            .join(
+                forecast_alias,
+                and_(
+                    forecast_alias.deletable == 0,
+                    forecast_alias.id == forecast_detail_alias.forecast_id,
+                ),
+            )
+            .filter(
+                and_(
+                    forecast_alias.month == get_allocation_request.month,
+                    forecast_alias.year == get_allocation_request.year,
+                    forecast_detail_months_alias.deletable == 0,
+                )
+            )
+            .group_by(
+                forecast_detail_months_alias.forecast_month,
+                forecast_alias.year,
+                forecast_alias.month,
+                forecast_detail_alias.model_id,
+            )
+            .subquery()
         )
-        rows = res.fetchall()
 
-        return rows
+        query = (
+            self.get_va_db(request)
+            .query(
+                Dealer.id,
+                Dealer.name,
+                Forecast.year,
+                Forecast.month,
+                Model.id,
+                Model.segment_id,
+                Model.category_id,
+                ForecastDetailMonth.forecast_month,
+                func.coalesce(ForecastDetailMonth.adjustment, 0),
+                func.coalesce(ForecastDetailMonth.total_ws, 0),
+                case(
+                    (
+                        (
+                            total_ws_alias.c.total_ws_sum > 0,
+                            cast(func.coalesce(ForecastDetailMonth.total_ws, 0), Float)
+                            / cast(
+                                func.coalesce(total_ws_alias.c.total_ws_sum, 0), Float
+                            )
+                            * 100,
+                        )
+                    ),
+                    else_=0,
+                ),
+                cast(
+                    case(
+                        (
+                            (
+                                total_ws_alias.c.total_ws_sum > 0,
+                                cast(
+                                    (
+                                        (
+                                            func.coalesce(
+                                                SlotCalculationDetail.take_off, 0
+                                            )
+                                            + func.coalesce(SlotCalculationDetail.bo, 0)
+                                        )
+                                        * StockPilot.percentage
+                                    )
+                                    - (
+                                        (
+                                            func.coalesce(SlotCalculationDetail.soa, 0)
+                                            + func.coalesce(SlotCalculationDetail.oc, 0)
+                                            + func.coalesce(
+                                                SlotCalculationDetail.booking_prospect,
+                                                0,
+                                            )
+                                        )
+                                        * func.coalesce(
+                                            OrderConfiguration.forecast_percentage, 0
+                                        )
+                                        / 100
+                                    ),
+                                    Float,
+                                )
+                                / cast(
+                                    func.coalesce(total_ws_alias.c.total_ws_sum, 0),
+                                    Float,
+                                )
+                                * 100,
+                            )
+                        ),
+                        else_=0,
+                    ),
+                    Integer,
+                ),
+                func.coalesce(ForecastDetailMonth.confirmed_total_ws, 0),
+            )
+            .join(Dealer, and_(Dealer.id == Forecast.dealer_id))
+            .join(
+                ForecastDetail,
+                and_(
+                    ForecastDetail.forecast_id == Forecast.id,
+                    ForecastDetail.deletable == 0,
+                ),
+            )
+            .join(
+                ForecastDetailMonth,
+                and_(
+                    ForecastDetailMonth.forecast_detail_id == ForecastDetail.id,
+                    ForecastDetailMonth.deletable == 0,
+                ),
+            )
+            .join(Model, and_(Model.id == ForecastDetail.model_id))
+            .join(
+                StockPilot,
+                and_(
+                    StockPilot.segment_id == Model.segment_id,
+                    StockPilot.month == Forecast.month,
+                    StockPilot.year == Forecast.year,
+                ),
+            )
+            .join(
+                OrderConfiguration,
+                and_(
+                    OrderConfiguration.month == Forecast.month,
+                    OrderConfiguration.year == Forecast.year,
+                    OrderConfiguration.category_id == Model.category_id,
+                ),
+            )
+            .join(
+                SlotCalculation,
+                and_(
+                    SlotCalculation.year == Forecast.year,
+                    SlotCalculation.month == Forecast.month,
+                    SlotCalculation.deletable == 0,
+                ),
+                isouter=True,
+            )
+            .join(
+                SlotCalculationDetail,
+                and_(
+                    SlotCalculation.id == SlotCalculationDetail.slot_calculation_id,
+                    SlotCalculationDetail.model_id == Model.id,
+                    SlotCalculationDetail.forecast_month
+                    == ForecastDetailMonth.forecast_month,
+                    SlotCalculationDetail.deletable == 0,
+                ),
+                isouter=True,
+            )
+            .join(
+                total_ws_alias,
+                and_(
+                    total_ws_alias.c.model_id == Model.id,
+                    total_ws_alias.c.forecast_month
+                    == ForecastDetailMonth.forecast_month,
+                    total_ws_alias.c.model_id == Model.id,
+                ),
+                isouter=True,
+            )
+            .group_by(
+                Forecast.month,
+                Forecast.year,
+                Dealer.id,
+                Model.id,
+                Model.category_id,
+                ForecastDetailMonth.forecast_month,
+                ForecastDetailMonth.adjustment,
+                ForecastDetailMonth.total_ws,
+                total_ws_alias.c.total_ws_sum,
+                SlotCalculationDetail.take_off,
+                SlotCalculationDetail.soa,
+                SlotCalculationDetail.oc,
+                SlotCalculationDetail.bo,
+                OrderConfiguration.forecast_percentage,
+                StockPilot.percentage,
+                ForecastDetailMonth.confirmed_total_ws,
+                SlotCalculationDetail.booking_prospect,
+            )
+            .order_by(
+                Model.category_id,
+                Model.id,
+                ForecastDetailMonth.forecast_month,
+            )
+        )
+
+        # print query with parameters
+        print(query.statement.compile(compile_kwargs={"literal_binds": True}))
+
+        res = query.all()
+
+        return res
 
     def get_allocation_monthly_target(
         self, request: Request, get_allocation_request: GetAllocationRequest
     ):
-        query = """
-select va_monthly_target_details.category_id,
-       va_monthly_target_details.target,
-       va_monthly_target_details.dealer_id,
-       va_monthly_target_details.forecast_month,
-       sum(soa + bo),
-       coalesce(sum(total_ws), 0)
-from va_monthly_targets
-         join va_monthly_target_details on va_monthly_targets.id = va_monthly_target_details.month_target_id
-         left join va_forecasts vf on vf.month = va_monthly_targets.month and va_monthly_targets.year = vf.year and
-                                      vf.dealer_id = va_monthly_target_details.dealer_id
-         left join va_forecast_details vfd on vfd.forecast_id = vf.id and vfd.deletable = 0
-         left join va_models vm on vm.id = vfd.model_id and vm.category_id = va_monthly_target_details.category_id
-         left join va_forecast_detail_months vfdm on vfdm.forecast_detail_id = vfd.id and
-                                                     vfdm.forecast_month = va_monthly_target_details.forecast_month
-         left join va_slot_calculations vsc
-                   on vsc.month = va_monthly_targets.month and vsc.year = va_monthly_targets.year and vsc.deletable = 0
-         left join va_slot_calculation_details vscd on vscd.slot_calculation_id = vsc.id and vscd.forecast_month =
-                                                                                             va_monthly_target_details.forecast_month and
-                                                       vscd.deletable = 0
-where va_monthly_target_details.deletable = 0
-  and va_monthly_targets.month = :month
-  and va_monthly_targets.year = :year
-group by va_monthly_target_details.category_id, va_monthly_target_details.target, va_monthly_target_details.dealer_id,
-         va_monthly_target_details.forecast_month;
-        """
-
-        res = self.get_va_db(request).execute(
-            text(query),
-            {
-                "month": get_allocation_request.month,
-                "year": get_allocation_request.year,
-            },
+        query = (
+            (
+                self.get_va_db(request)
+                .query(
+                    MonthlyTargetDetail.category_id,
+                    MonthlyTargetDetail.target,
+                    MonthlyTargetDetail.dealer_id,
+                    MonthlyTargetDetail.forecast_month,
+                    func.coalesce(
+                        func.sum(SlotCalculationDetail.soa + SlotCalculationDetail.bo),
+                        0,
+                    ),
+                    func.coalesce(func.sum(ForecastDetailMonth.total_ws), 0),
+                )
+                .join(
+                    MonthlyTarget,
+                    and_(
+                        MonthlyTarget.id == MonthlyTargetDetail.month_target_id,
+                        MonthlyTarget.deletable == 0,
+                    ),
+                )
+                .join(
+                    Forecast,
+                    and_(
+                        Forecast.month == MonthlyTarget.month,
+                        Forecast.year == MonthlyTarget.year,
+                        Forecast.dealer_id == MonthlyTargetDetail.dealer_id,
+                        Forecast.deletable == 0,
+                    ),
+                    isouter=True,
+                )
+                .join(
+                    ForecastDetail,
+                    and_(
+                        ForecastDetail.forecast_id == Forecast.id,
+                        ForecastDetail.deletable == 0,
+                    ),
+                    isouter=True,
+                )
+                .join(
+                    Model,
+                    and_(
+                        Model.id == ForecastDetail.model_id,
+                        Model.category_id == MonthlyTargetDetail.category_id,
+                    ),
+                )
+                .join(
+                    ForecastDetailMonth,
+                    and_(
+                        ForecastDetailMonth.forecast_detail_id == ForecastDetail.id,
+                        ForecastDetailMonth.forecast_month
+                        == MonthlyTargetDetail.forecast_month,
+                        ForecastDetailMonth.deletable == 0,
+                    ),
+                )
+                .join(
+                    SlotCalculation,
+                    and_(
+                        SlotCalculation.month == MonthlyTarget.month,
+                        SlotCalculation.year == MonthlyTarget.year,
+                        SlotCalculation.deletable == 0,
+                    ),
+                )
+                .join(
+                    SlotCalculationDetail,
+                    and_(
+                        SlotCalculationDetail.slot_calculation_id == SlotCalculation.id,
+                        SlotCalculationDetail.forecast_month
+                        == MonthlyTargetDetail.forecast_month,
+                        SlotCalculationDetail.deletable == 0,
+                    ),
+                )
+            )
+            .filter(
+                and_(
+                    MonthlyTarget.month == get_allocation_request.month,
+                    MonthlyTarget.year == get_allocation_request.year,
+                    MonthlyTargetDetail.deletable == 0,
+                )
+            )
+            .group_by(
+                MonthlyTargetDetail.category_id,
+                MonthlyTargetDetail.target,
+                MonthlyTargetDetail.dealer_id,
+                MonthlyTargetDetail.forecast_month,
+            )
         )
-        rows = res.fetchall()
+
+        rows = query.all()
 
         return rows
 
