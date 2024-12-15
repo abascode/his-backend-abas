@@ -78,6 +78,7 @@ class AllocationUseCase(IAllocationUseCase):
                 ws_percentage,
                 allocation,
                 confirmed_total_ws,
+                end_stock,
             ) = i
 
             if dealer_id not in dealer_map:
@@ -102,7 +103,7 @@ class AllocationUseCase(IAllocationUseCase):
                 total_alloc_map[dealer_id][category_id] = 0
 
             total_alloc_map[dealer_id][category_id] += allocation
-
+            dealer_adjustment_map[dealer_id][model_id]["remaining_stock"] = end_stock
             dealer_adjustment_map[dealer_id][model_id][forecast_month] = (
                 AllocationAdjustmentMonthResponse(
                     month=forecast_month,
@@ -127,15 +128,21 @@ class AllocationUseCase(IAllocationUseCase):
             ].items():
                 adjustment_model = AllocationAdjustmentModelResponse(
                     model=TextValueResponse(text=model_id, value=model_id),
+                    remaining_stock=forecast_month_map["remaining_stock"],
                     category=TextValueResponse(
                         text=model_map[model_id]["category_id"],
                         value=model_map[model_id]["category_id"],
+                    ),
+                    segment=TextValueResponse(
+                        text=model_map[model_id]["segment_id"],
+                        value=model_map[model_id]["segment_id"],
                     ),
                     months=[],
                 )
 
                 for forecast_month, month in forecast_month_map.items():
-                    adjustment_model.months.append(month)
+                    if forecast_month != "remaining_stock":
+                        adjustment_model.months.append(month)
 
                 adjustment.models.append(adjustment_model)
             adjustments.append(adjustment)
@@ -187,8 +194,6 @@ class AllocationUseCase(IAllocationUseCase):
                 ),
                 categories=[],
             )
-
-            percentage: int  # persen dari total yang lain
 
             for category_id, months in category_map.items():
                 for i in months:

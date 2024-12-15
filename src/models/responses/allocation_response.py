@@ -37,7 +37,9 @@ class AllocationAdjustmentMonthResponse(BaseModel):
 
 class AllocationAdjustmentModelResponse(BaseModel):
     model: TextValueResponse
+    segment: TextValueResponse
     category: TextValueResponse
+    remaining_stock: int
     months: List[AllocationAdjustmentMonthResponse]
 
 

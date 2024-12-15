@@ -5,12 +5,7 @@ import requests
 from typing import List
 
 from fastapi import Depends, HTTPException
-from sqlalchemy import (
-    func,
-    and_,
-    extract,
-    case,
-)
+from sqlalchemy import func, and_
 from sqlalchemy.orm import Session, aliased
 from starlette.requests import Request
 
@@ -19,11 +14,11 @@ from src.dependencies.database_dependency import get_va_db
 from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
+from src.domains.forecasts.entities.va_forecasts_archive import ForecastArchive
 from src.domains.forecasts.forecast_interface import IForecastRepository
 from src.domains.masters.entities.va_dealers import Dealer
 from src.models.requests.forecast_request import (
     GetForecastSummaryRequest,
-    ApprovalAllocationRequest,
 )
 from src.models.responses.forecast_response import (
     GetForecastSummaryResponse,
@@ -111,33 +106,47 @@ class ForecastRepository(IForecastRepository):
             self.get_va_db(request).query(func.count(Dealer.id)).scalar_subquery()
         )
 
+        forecast_alias = aliased(Forecast)
+
         dealer_submit = (
             self.get_va_db(request)
-            .query(func.count().label("dealer_submit"))
-            .select_from(Dealer)
-            .join(Forecast, Dealer.id == Forecast.dealer_id)
-            .filter(
-                and_(
-                    extract("month", Dealer.created_at) <= Forecast.month,
-                    extract("year", Dealer.created_at) <= Forecast.year,
-                )
+            .query(
+                func.count(forecast_alias.dealer_id.distinct()).label("dealer_submit")
             )
-            .group_by(Forecast.month, Forecast.year)
-            .subquery()
+            .filter(
+                forecast_alias.deletable == 0,
+                Forecast.year == forecast_alias.year,
+                Forecast.month == forecast_alias.month,
+            )
+            .scalar_subquery()
         )
 
         order_confirmation = (
             self.get_va_db(request)
-            .query(func.count().label("total_oc"))
-            .select_from(ForecastDetailMonth)
+            .query(func.count(forecast_alias.dealer_id.distinct()).label("total_oc"))
             .join(
                 ForecastDetail,
-                ForecastDetailMonth.forecast_detail_id == ForecastDetail.id,
+                and_(
+                    forecast_alias.id == ForecastDetail.forecast_id,
+                    ForecastDetail.deletable == 0,
+                ),
             )
-            .join(Forecast, ForecastDetail.forecast_id == Forecast.id)
-            .filter(ForecastDetailMonth.confirmed_total_ws.isnot(None))
-            .group_by(Forecast.month, Forecast.year)
-            .subquery()
+            .join(
+                ForecastDetailMonth,
+                and_(
+                    ForecastDetailMonth.forecast_detail_id == ForecastDetail.id,
+                    ForecastDetail.deletable == 0,
+                ),
+            )
+            .filter(
+                and_(
+                    forecast_alias.deletable == 0,
+                    forecast_alias.month == Forecast.month,
+                    forecast_alias.year == Forecast.year,
+                    ForecastDetailMonth.confirmed_total_ws.isnot(None),
+                )
+            )
+            .scalar_subquery()
         )
 
         query = (
@@ -145,11 +154,9 @@ class ForecastRepository(IForecastRepository):
             .query(
                 Forecast.month.label("month"),
                 Forecast.year.label("year"),
-                func.sum(dealer_submit.c.dealer_submit).label("dealer_submit"),
-                (total_dealer - func.sum(dealer_submit.c.dealer_submit)).label(
-                    "remaining_dealer_submit"
-                ),
-                func.sum(order_confirmation.c.total_oc).label("order_confirmation"),
+                dealer_submit.label("dealer_submit"),
+                (total_dealer - dealer_submit).label("remaining_dealer_submit"),
+                order_confirmation.label("order_confirmation"),
             )
             .filter(Forecast.deletable == 0)
             .group_by(
@@ -167,6 +174,8 @@ class ForecastRepository(IForecastRepository):
                 Forecast.year == get_summary_request.year,
             )
 
+        print(query.statement.compile(compile_kwargs={"literal_binds": True}))
+
         res, cnt = paginate(
             query,
             get_summary_request.page,
@@ -183,6 +192,9 @@ class ForecastRepository(IForecastRepository):
             )
             for month, year, dealer_submit, remaining_dealer_submit, order_confirmation in res
         ], cnt
+
+    def add_forecast_archive(self, request: Request, forecast_archive: ForecastArchive):
+        self.get_va_db(request).add(forecast_archive)
 
     def approve_allocation_data(
         self,

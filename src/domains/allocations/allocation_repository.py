@@ -144,6 +144,7 @@ class AllocationRepository(IAllocationRepository):
                     Integer,
                 ),
                 func.coalesce(ForecastDetailMonth.confirmed_total_ws, 0),
+                func.coalesce(ForecastDetail.end_stock, 0),
             )
             .join(Dealer, and_(Dealer.id == Forecast.dealer_id))
             .join(
@@ -225,6 +226,7 @@ class AllocationRepository(IAllocationRepository):
                 StockPilot.percentage,
                 ForecastDetailMonth.confirmed_total_ws,
                 SlotCalculationDetail.booking_prospect,
+                ForecastDetail.end_stock,
             )
             .order_by(
                 Model.id,

@@ -17,9 +17,23 @@ from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTarg
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 
+from src.domains.forecasts.entities.va_forecasts_archive import ForecastArchive
+from src.domains.forecasts.entities.va_forecasts_detail_archive import (
+    ForecastDetailArchive,
+)
+from src.domains.forecasts.entities.va_forecasts_detail_month_archive import (
+    ForecastDetailMonthArchive,
+)
+
 
 # Calculations
 from src.domains.calculations.entities.va_slot_calculations import SlotCalculation
-from src.domains.calculations.entities.va_slot_calculation_details import SlotCalculationDetail
-from src.domains.calculations.entities.va_slot_calculation_stock_pilots import SlotCalculationStockPilot
-from src.domains.calculations.entities.va_slot_calculation_order_configuration import SlotCalculationOrderConfiguration
+from src.domains.calculations.entities.va_slot_calculation_details import (
+    SlotCalculationDetail,
+)
+from src.domains.calculations.entities.va_slot_calculation_stock_pilots import (
+    SlotCalculationStockPilot,
+)
+from src.domains.calculations.entities.va_slot_calculation_order_configuration import (
+    SlotCalculationOrderConfiguration,
+)

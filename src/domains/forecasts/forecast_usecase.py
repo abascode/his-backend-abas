@@ -14,6 +14,7 @@ from src.domains.calculations.calculation_repository import CalculationRepositor
 from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
+from src.domains.forecasts.entities.va_forecasts_archive import ForecastArchive
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.forecast_interface import (
@@ -390,57 +391,20 @@ class ForecastUseCase(IForecastUseCase):
             request, payload, approval_request.month, approval_request.year
         )
 
-    def get_allocation(
-        self, request: Request, get_allocation_request: GetAllocationRequest
-    ) -> GetAllocationAdjustmentResponse:
-        forecasts = self.forecast_repo.get_forecast(
-            request,
-            month=get_allocation_request.month,
-            year=get_allocation_request.year,
+    def archive_forecast(self, request: Request, forecast: Forecast):
+        archive = ForecastArchive(
+            record_id=forecast.id,
+            name=forecast.name,
+            month=forecast.month,
+            year=forecast.year,
+            dealer_id=forecast.dealer_id,
+            confirmed_at=forecast.confirmed_at,
+            created_by=forecast.created_by,
+            updated_by=forecast.updated_by,
+            deleted_by=forecast.deleted_by,
+            created_at=forecast.created_at,
+            updated_at=forecast.updated_at,
+            deletable=forecast.deletable,
         )
 
-        dealer_dict = {}
-        models = []
-        calculations = self.calculation_repo.find_calculation(
-            request,
-            month=get_allocation_request.month,
-            year=get_allocation_request.year,
-        )
-
-        total_all_ws = 0
-
-        for i in forecasts:
-            months: List[AllocationAdjustmentModelResponse] = []
-            dealer_dict = [i.dealer] = {}
-
-            for j in i.details:
-                if j.deletable == 1:
-                    pass
-
-                models.append(j.model_id)
-                dealer_dict[i.dealer][j.model_id] = {}
-
-                for k in j.months:
-                    k: ForecastDetailMonth = k
-                    adjustment = AllocationAdjustmentMonthResponse(
-                        month=k.forecast_month,
-                        adjustment=k.adjustment,
-                        ws=k.total_ws,
-                        ws_percentage=0,
-                        allocation=0,
-                        confirmed_total_ws=k.confirmed_total_ws,
-                    )
-                    total_all_ws += k.total_ws
-                    # dealer_dict[i.dealer][j.model_id] =
-
-                adjustment = AllocationAdjustmentModelResponse(
-                    model=TextValueResponse(), category=TextValueResponse(), months=[]
-                )
-
-            allocation = GetAllocationAdjustmentResponse(
-                dealer=TextValueResponse(text=i.dealer.name, value=i.dealer.name),
-                adjustments=[],
-                monthly_targets=[],
-            )
-
-        return GetAllocationAdjustmentResponse(data=forecast.details)
+        # self.forecast_repo.add_forecast_archive(request, data)

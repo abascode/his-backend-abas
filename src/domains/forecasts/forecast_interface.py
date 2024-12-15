@@ -6,6 +6,7 @@ from starlette.requests import Request
 from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDetailMonth
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
+from src.domains.forecasts.entities.va_forecasts_archive import ForecastArchive
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.models.requests.allocation_request import GetAllocationRequest
@@ -53,12 +54,6 @@ class IForecastUseCase:
     def approve_allocation(
         self, request: Request, approval_request: ApprovalAllocationRequest
     ) -> None:
-        pass
-
-    @abc.abstractmethod
-    def get_allocation(
-        self, request: Request, get_allocation_request: GetAllocationRequest
-    ) -> GetAllocationAdjustmentResponse:
         pass
 
 
@@ -115,4 +110,8 @@ class IForecastRepository:
         month: int,
         year: int,
     ):
+        pass
+
+    @abc.abstractmethod
+    def add_forecast_archive(self, request: Request, forecast_archive: ForecastArchive):
         pass
