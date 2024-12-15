@@ -18,6 +18,7 @@ class GetForecastDetailMonthResponse(BaseModel):
     total_rs: int
     total_ws: int
     final_allocation: int
+    confirmed_total_ws: int
 
 
 class GetForecastDetailResponse(BaseModel):
@@ -33,17 +34,19 @@ class GetForecastResponse(BaseModel):
     dealer: TextValueResponse
     models: List[GetForecastDetailResponse]
 
+
 class GetApprovalAllocationSuccessResponse(BaseModel):
     primary_id: str
     status: str
     message: str
+
 
 class GetApprovalAllocationErrorResponse(BaseModel):
     primary_id: str
     status: str
     message: str
 
+
 class GetApprovalAllocationResponse(BaseModel):
     success_data: List[GetApprovalAllocationSuccessResponse]
     error_data: List[GetApprovalAllocationErrorResponse]
-

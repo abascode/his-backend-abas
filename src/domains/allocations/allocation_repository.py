@@ -227,9 +227,8 @@ class AllocationRepository(IAllocationRepository):
                 SlotCalculationDetail.booking_prospect,
             )
             .order_by(
-                Model.category_id,
                 Model.id,
-                ForecastDetailMonth.forecast_month,
+                Dealer.id,
             )
         )
 

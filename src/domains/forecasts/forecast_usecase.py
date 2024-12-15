@@ -275,7 +275,12 @@ class ForecastUseCase(IForecastUseCase):
                         forecast_month=j.forecast_month,
                         total_rs=j.total_rs,
                         total_ws=j.total_ws,
-                        final_allocation=0,
+                        final_allocation=(
+                            0 if j.hmsi_allocation is None else j.hmsi_allocation
+                        ),
+                        confirmed_total_ws=(
+                            0 if j.confirmed_total_ws is None else j.confirmed_total_ws
+                        ),
                     )
                 )
 
