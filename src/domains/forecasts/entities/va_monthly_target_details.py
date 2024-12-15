@@ -1,12 +1,7 @@
-from src.shared.entities.basemodel import BaseModel
-from src.shared.entities.basemodel import BaseModel
-
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func, text, event
 from src.shared.entities.basemodel import BaseModel
 from sqlalchemy.orm import mapped_column, MappedColumn, relationship, Mapped
 from datetime import datetime
-
-from src.shared.utils.xid import generate_xid
 
 
 class MonthlyTargetDetail(BaseModel):

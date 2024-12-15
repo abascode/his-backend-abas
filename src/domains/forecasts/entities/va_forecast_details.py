@@ -1,10 +1,7 @@
 from typing import List
 
-from src.shared.entities.basemodel import BaseModel
-
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func, text, event
 from src.shared.entities.basemodel import BaseModel
-from src.shared.utils.xid import generate_xid
 from sqlalchemy.orm import mapped_column, MappedColumn, relationship, Mapped
 from datetime import datetime
 
@@ -13,7 +10,9 @@ class ForecastDetail(BaseModel):
     __tablename__ = "va_forecast_details"
     id: MappedColumn[str] = mapped_column(String(255), primary_key=True, nullable=False)
     forecast_id: MappedColumn[str] = mapped_column(
-        String(255), ForeignKey("va_forecasts.id", onupdate="CASCADE"), nullable=False, 
+        String(255),
+        ForeignKey("va_forecasts.id", onupdate="CASCADE"),
+        nullable=False,
     )
     model_id: MappedColumn[str] = mapped_column(
         String(255), ForeignKey("va_models.id", onupdate="CASCADE"), nullable=False

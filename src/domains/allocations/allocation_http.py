@@ -23,9 +23,28 @@ from src.models.responses.allocation_response import (
 from src.models.responses.basic_response import (
     BasicResponse,
     ListResponse,
+    NoDataResponse,
 )
 
 router = APIRouter(prefix="/api/allocations", tags=["Allocation"])
+
+
+@router.post(
+    "/monthly-target",
+    response_model=NoDataResponse,
+    summary="Upsert Monthly Target",
+    description="Upsert Monthly Target",
+)
+def upsert_monthly_target(
+    request: Request,
+    file: UploadFile = File(...),
+    month: int = Form(...),
+    year: int = Form(...),
+    forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
+) -> NoDataResponse:
+    forecast_uc.upsert_monthly_target(request, file, month, year)
+
+    return NoDataResponse(message="Success Upserting Monthly Target")
 
 
 @router.get("", response_model=BasicResponse[GetAllocationResponse])

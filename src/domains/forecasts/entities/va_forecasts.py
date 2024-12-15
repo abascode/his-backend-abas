@@ -1,10 +1,9 @@
 from typing import List
 
-from sqlalchemy import event, ForeignKey
+from sqlalchemy import ForeignKey
 
 from sqlalchemy import DateTime, Integer, String, func, text, event
 from src.shared.entities.basemodel import BaseModel
-from src.shared.utils.xid import generate_xid
 
 from sqlalchemy.orm import mapped_column, MappedColumn, relationship, Mapped
 from datetime import datetime

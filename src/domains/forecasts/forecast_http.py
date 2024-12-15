@@ -80,24 +80,6 @@ def get_forecast_detail(
 
 
 @router.post(
-    "/monthly-target",
-    response_model=NoDataResponse,
-    summary="Upsert Monthly Target",
-    description="Upsert Monthly Target",
-)
-def upsert_monthly_target(
-    request: Request,
-    file: UploadFile = File(...),
-    month: int = Form(...),
-    year: int = Form(...),
-    forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
-) -> NoDataResponse:
-    forecast_uc.upsert_monthly_target(request, file, month, year)
-
-    return NoDataResponse(message="Success Upserting Monthly Target")
-
-
-@router.post(
     "/confirm", dependencies=[Depends(api_key_auth)], response_model=PdfResponse
 )
 def confirm_forecast(
