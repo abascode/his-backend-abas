@@ -174,7 +174,7 @@ class ForecastRepository(IForecastRepository):
                 Forecast.year == get_summary_request.year,
             )
 
-        print(query.statement.compile(compile_kwargs={"literal_binds": True}))
+        query = query.order_by(Forecast.year.desc(), Forecast.month.desc())
 
         res, cnt = paginate(
             query,
