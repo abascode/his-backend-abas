@@ -8,7 +8,10 @@ from src.domains.allocations.allocation_interface import IAllocationUseCase
 from src.domains.allocations.allocation_usecase import AllocationUseCase
 from src.domains.forecasts.forecast_interface import IForecastUseCase
 from src.domains.forecasts.forecast_usecase import ForecastUseCase
-from src.models.requests.allocation_request import GetAllocationRequest
+from src.models.requests.allocation_request import (
+    GetAllocationRequest,
+    SubmitAllocationRequest,
+)
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
@@ -56,3 +59,13 @@ def get_allocation_detail(
     res = allocation_uc.get_allocations(request, get_allocation_request)
 
     return BasicResponse(data=res, message="Success getting allocation")
+
+
+@router.post("", response_model=NoDataResponse)
+def submit_allocation(
+    request: Request,
+    submit_allocation_request: SubmitAllocationRequest,
+    allocation_uc: IAllocationUseCase = Depends(AllocationUseCase),
+) -> NoDataResponse:
+    allocation_uc.submit_allocation(request, submit_allocation_request)
+    return NoDataResponse(message="Success submitting allocation")

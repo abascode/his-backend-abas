@@ -1,7 +1,7 @@
 import http
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
 import openpyxl
 from fastapi import Depends, HTTPException, UploadFile
@@ -11,11 +11,18 @@ from src.domains.allocations.allocation_interface import (
     IAllocationUseCase,
 )
 from src.domains.allocations.allocation_repository import AllocationRepository
+from src.domains.allocations.enums import AllocationSubmissionStatusEnum
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
+from src.domains.forecasts.forecast_interface import IForecastRepository
+from src.domains.forecasts.forecast_repository import ForecastRepository
 from src.domains.masters.master_interface import IMasterRepository
 from src.domains.masters.master_repository import MasterRepository
-from src.models.requests.allocation_request import GetAllocationRequest
+from src.models.requests.allocation_request import (
+    GetAllocationRequest,
+    SubmitAllocationRequest,
+    SubmitAllocationAdjustmentRequest,
+)
 from src.models.responses.allocation_response import (
     GetAllocationAdjustmentResponse,
     AllocationAdjustmentMonthResponse,
@@ -44,9 +51,11 @@ class AllocationUseCase(IAllocationUseCase):
         self,
         allocation_repo: IAllocationRepository = Depends(AllocationRepository),
         master_repo: IMasterRepository = Depends(MasterRepository),
+        forecast_repo: IForecastRepository = Depends(ForecastRepository),
     ):
         self.master_repo = master_repo
         self.allocation_repo = allocation_repo
+        self.forecast_repo = forecast_repo
 
     def get_allocations(
         self, request: Request, get_allocation_request: GetAllocationRequest
@@ -65,6 +74,7 @@ class AllocationUseCase(IAllocationUseCase):
 
         for i in adjustment_data:
             (
+                forecast_detail_month_id,
                 dealer_id,
                 dealer,
                 year,
@@ -106,6 +116,7 @@ class AllocationUseCase(IAllocationUseCase):
             dealer_adjustment_map[dealer_id][model_id]["remaining_stock"] = end_stock
             dealer_adjustment_map[dealer_id][model_id][forecast_month] = (
                 AllocationAdjustmentMonthResponse(
+                    id=forecast_detail_month_id,
                     month=forecast_month,
                     adjustment=adjustment_model,
                     ws=ws,
@@ -356,3 +367,44 @@ class AllocationUseCase(IAllocationUseCase):
         commit(request, Database.VEHICLE_ALLOCATION)
 
         clear_directory(Path(temp_storage_path))
+
+    def submit_allocation(
+        self, request: Request, submit_allocation_request: SubmitAllocationRequest
+    ) -> None:
+        begin_transaction(request, Database.VEHICLE_ALLOCATION)
+
+        forecasts = self.forecast_repo.get_forecast(
+            request,
+            month=submit_allocation_request.month,
+            year=submit_allocation_request.year,
+        )
+
+        if len(forecasts) == 0:
+            raise HTTPException(
+                http.HTTPStatus.BAD_REQUEST, detail="Forecast is not found"
+            )
+
+        adjustment_map: Dict[str, SubmitAllocationAdjustmentRequest] = {}
+
+        for i in submit_allocation_request.adjustments:
+            adjustment_map[i.forecast_detail_month_id] = i
+
+        for i in forecasts:
+            for j in i.details:
+                if j.deletable == 0:
+                    for k in j.months:
+                        if k.deletable == 0:
+
+                            if k.id in adjustment_map:
+                                k.adjustment = adjustment_map[k.id].adjustment
+
+        if submit_allocation_request.status == AllocationSubmissionStatusEnum.SUBMIT:
+            approvals = self.allocation_repo.get_allocation_approvals(
+                request, submit_allocation_request.month, submit_allocation_request.year
+            )
+            if len(approvals) == 0:
+                matrices = self.allocation_repo.get_allocation_approval_matrices(
+                    request,
+                )
+
+        commit(request, Database.VEHICLE_ALLOCATION)

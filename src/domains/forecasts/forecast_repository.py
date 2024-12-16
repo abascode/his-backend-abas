@@ -199,16 +199,16 @@ class ForecastRepository(IForecastRepository):
     def approve_allocation_data(
         self,
         request: Request,
+        payload: dict,
         month: int,
         year: int,
-        payload: dict,
     ):
         config = get_config()
         url = config.outbound["hoyu"].base_url + "/ords/hmsi/dealer_forcast/allocation"
 
         response = requests.post(
             url,
-            json=payload,
+            data=payload,
             auth=(
                 config.outbound["hoyu"].username,
                 config.outbound["hoyu"].password,

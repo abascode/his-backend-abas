@@ -99,7 +99,7 @@ def confirm_forecast(
     response_model=NoDataResponse,
     summary="Approve Allocation",
     description="Approve Allocation",
-    dependencies=[Depends(api_key_auth)],
+    # dependencies=[Depends(api_key_auth)],
 )
 def approve_forecast(
     request: Request,

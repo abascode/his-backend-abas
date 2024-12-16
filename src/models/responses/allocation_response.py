@@ -27,6 +27,7 @@ class AllocationTargetMonthResponse(BaseModel):
 
 
 class AllocationAdjustmentMonthResponse(BaseModel):
+    id: str
     month: int
     adjustment: int
     ws: int  # db.total_ws

@@ -4,9 +4,16 @@ from typing import List
 from fastapi import UploadFile
 from starlette.requests import Request
 
+from src.domains.allocations.entities.allocation_approval_matrix import (
+    AllocationApprovalMatrix,
+)
+from src.domains.allocations.entities.allocation_approvals import AllocationApproval
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
-from src.models.requests.allocation_request import GetAllocationRequest
+from src.models.requests.allocation_request import (
+    GetAllocationRequest,
+    SubmitAllocationRequest,
+)
 from src.models.responses.allocation_response import GetAllocationAdjustmentResponse
 
 
@@ -20,6 +27,12 @@ class IAllocationUseCase:
     @abc.abstractmethod
     def upsert_monthly_target(
         self, request: Request, file: UploadFile, month: int, year: int
+    ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def submit_allocation(
+        self, request: Request, submit_allocation_request: SubmitAllocationRequest
     ) -> None:
         pass
 
@@ -57,4 +70,22 @@ class IAllocationRepository:
     def create_monthly_target_detail(
         self, request: Request, monthly_target_detail: MonthlyTargetDetail
     ) -> MonthlyTargetDetail:
+        pass
+
+    @abc.abstractmethod
+    def get_allocation_approvals(
+        self, request: Request, month: int, year: int
+    ) -> List[AllocationApproval]:
+        pass
+
+    @abc.abstractmethod
+    def get_allocation_approval_matrices(
+        self, request: Request
+    ) -> List[AllocationApprovalMatrix]:
+        pass
+
+    @abc.abstractmethod
+    def create_allocation_approvals(
+        self, request: Request, approvals: List[AllocationApproval]
+    ):
         pass

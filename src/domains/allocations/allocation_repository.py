@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import Depends
 from sqlalchemy import func, Integer, and_, cast, select, case, Float, text
 from sqlalchemy.orm import Session, aliased
@@ -5,6 +7,10 @@ from starlette.requests import Request
 
 from src.dependencies.database_dependency import get_va_db
 from src.domains.allocations.allocation_interface import IAllocationRepository
+from src.domains.allocations.entities.allocation_approval_matrix import (
+    AllocationApprovalMatrix,
+)
+from src.domains.allocations.entities.allocation_approvals import AllocationApproval
 from src.domains.calculations.entities.va_slot_calculation_details import (
     SlotCalculationDetail,
 )
@@ -22,6 +28,7 @@ from src.models.requests.allocation_request import GetAllocationRequest
 
 
 class AllocationRepository(IAllocationRepository):
+
     def __init__(self, va_db: Session = Depends(get_va_db)):
         self.va_db = va_db
 
@@ -78,6 +85,7 @@ class AllocationRepository(IAllocationRepository):
         query = (
             self.get_va_db(request)
             .query(
+                ForecastDetailMonth.id,
                 Dealer.id,
                 Dealer.name,
                 Forecast.year,
@@ -208,6 +216,12 @@ class AllocationRepository(IAllocationRepository):
                 ),
                 isouter=True,
             )
+            .filter(
+                and_(
+                    Forecast.month == get_allocation_request.month,
+                    Forecast.year == get_allocation_request.year,
+                )
+            )
             .group_by(
                 Forecast.month,
                 Forecast.year,
@@ -227,6 +241,7 @@ class AllocationRepository(IAllocationRepository):
                 ForecastDetailMonth.confirmed_total_ws,
                 SlotCalculationDetail.booking_prospect,
                 ForecastDetail.end_stock,
+                ForecastDetailMonth.id,
             )
             .order_by(
                 Model.id,
@@ -373,3 +388,18 @@ class AllocationRepository(IAllocationRepository):
     ):
         self.get_va_db(request).add(monthly_target_detail)
         self.get_va_db(request).flush()
+
+    def get_allocation_approvals(
+        self, request: Request, month: int, year: int
+    ) -> List[AllocationApproval]:
+        pass
+
+    def get_allocation_approval_matrices(
+        self, request: Request
+    ) -> List[AllocationApprovalMatrix]:
+        pass
+
+    def create_allocation_approvals(
+        self, request: Request, approvals: List[AllocationApproval]
+    ):
+        pass
