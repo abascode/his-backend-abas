@@ -16,6 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 
 from src.domains.allocations.enums import AllocationApprovalFlagEnum
+from src.domains.users.entities.users import User
 from src.shared.entities.basemodel import BaseModel
 from src.shared.utils.xid import generate_xid
 
@@ -43,16 +44,16 @@ class AllocationApproval(BaseModel):
         ForeignKey("va_users.id"),
         nullable=True,
     )
-    # created_by_user = relationship("User", foreign_keys=[created_by])
-    # approver = relationship("User", foreign_keys=[approver_id])
-    # updated_by_user = relationship("User", foreign_keys=[updated_by])
-    # deletable = mapped_column(Integer, server_default=text("0"))
-    # deleted_at = mapped_column(DateTime(timezone=True), nullable=True)
-    # deleted_by = mapped_column(
-    #     String(255),
-    #     ForeignKey("va_users.id"),
-    #     nullable=True,
-    # )
+    created_by_user = relationship(User, foreign_keys=[created_by])
+    approver = relationship(User, foreign_keys=[approver_id])
+    updated_by_user = relationship(User, foreign_keys=[updated_by])
+    deletable = mapped_column(Integer, server_default=text("0"))
+    deleted_at = mapped_column(DateTime(timezone=True), nullable=True)
+    deleted_by = mapped_column(
+        String(255),
+        ForeignKey("va_users.id"),
+        nullable=True,
+    )
 
 
 @event.listens_for(AllocationApproval, "before_insert")

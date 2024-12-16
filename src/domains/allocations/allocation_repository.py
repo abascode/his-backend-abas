@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 
 from fastapi import Depends
 from sqlalchemy import func, Integer, and_, cast, select, case, Float, text
@@ -391,15 +391,34 @@ class AllocationRepository(IAllocationRepository):
 
     def get_allocation_approvals(
         self, request: Request, month: int, year: int
-    ) -> List[AllocationApproval]:
-        pass
+    ) -> list[Type[AllocationApproval]]:
+        return (
+            self.get_va_db(request)
+            .query(AllocationApproval)
+            .filter(
+                and_(
+                    AllocationApproval.month == month,
+                    AllocationApproval.year == year,
+                    AllocationApproval.deletable == 0,
+                )
+            )
+            .order_by(AllocationApproval.id.asc())
+            .all()
+        )
 
     def get_allocation_approval_matrices(
         self, request: Request
-    ) -> List[AllocationApprovalMatrix]:
-        pass
+    ) -> List[Type[AllocationApprovalMatrix]]:
+        return (
+            self.get_va_db(request)
+            .query(AllocationApprovalMatrix)
+            .order_by(AllocationApprovalMatrix.order)
+            .all()
+        )
 
     def create_allocation_approvals(
         self, request: Request, approvals: List[AllocationApproval]
     ):
-        pass
+        for i in approvals:
+            self.get_va_db(request).add(i)
+            self.get_va_db(request).flush()

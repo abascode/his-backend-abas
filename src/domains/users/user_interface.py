@@ -17,3 +17,7 @@ class IUserRepository:
         self, request: Request, email: str, password: str
     ) -> LoginResponse | None:
         pass
+
+    @abc.abstractmethod
+    def upsert_user(self, request: Request, user_dto: IamUserDto):
+        pass

@@ -8,6 +8,10 @@ from src.domains.masters.entities.va_stock_pilots import StockPilot
 from src.domains.masters.entities.va_models import Model
 from src.domains.masters.entities.va_order_configurations import OrderConfiguration
 
+# User
+from src.domains.users.entities.users import User
+
+
 # Forecast
 from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
@@ -36,4 +40,13 @@ from src.domains.calculations.entities.va_slot_calculation_stock_pilots import (
 )
 from src.domains.calculations.entities.va_slot_calculation_order_configuration import (
     SlotCalculationOrderConfiguration,
+)
+
+# Approvals
+from src.domains.allocations.entities.allocation_approvals import (
+    AllocationApproval,
+)
+
+from src.domains.allocations.entities.allocation_approval_matrix import (
+    AllocationApprovalMatrix,
 )

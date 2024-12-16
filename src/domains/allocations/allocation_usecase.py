@@ -1,5 +1,6 @@
 import http
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import List, Dict
 
@@ -11,7 +12,11 @@ from src.domains.allocations.allocation_interface import (
     IAllocationUseCase,
 )
 from src.domains.allocations.allocation_repository import AllocationRepository
-from src.domains.allocations.enums import AllocationSubmissionStatusEnum
+from src.domains.allocations.entities.allocation_approvals import AllocationApproval
+from src.domains.allocations.enums import (
+    AllocationSubmissionStatusEnum,
+    AllocationApprovalFlagEnum,
+)
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.forecast_interface import IForecastRepository
@@ -394,7 +399,6 @@ class AllocationUseCase(IAllocationUseCase):
                 if j.deletable == 0:
                     for k in j.months:
                         if k.deletable == 0:
-
                             if k.id in adjustment_map:
                                 k.adjustment = adjustment_map[k.id].adjustment
 
@@ -406,5 +410,20 @@ class AllocationUseCase(IAllocationUseCase):
                 matrices = self.allocation_repo.get_allocation_approval_matrices(
                     request,
                 )
+                approvals = []
+                for i in matrices:
+                    approvals.append(
+                        AllocationApproval(
+                            month=submit_allocation_request.month,
+                            year=submit_allocation_request.year,
+                            approval_flag=AllocationApprovalFlagEnum.WAITING,
+                            role_id=i.role_id,
+                        )
+                    )
+                approvals[0].approver_id = request.state.user.username
+                approvals[0].approval_flag = AllocationApprovalFlagEnum.SUBMITTED
+                approvals[0].approved_at = datetime.now()
+
+                self.allocation_repo.create_allocation_approvals(request, approvals)
 
         commit(request, Database.VEHICLE_ALLOCATION)

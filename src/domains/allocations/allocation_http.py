@@ -3,7 +3,7 @@ import math
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from starlette.requests import Request
 
-from src.dependencies.auth_dependency import api_key_auth
+from src.dependencies.auth_dependency import api_key_auth, bearer_auth
 from src.domains.allocations.allocation_interface import IAllocationUseCase
 from src.domains.allocations.allocation_usecase import AllocationUseCase
 from src.domains.forecasts.forecast_interface import IForecastUseCase
@@ -61,7 +61,7 @@ def get_allocation_detail(
     return BasicResponse(data=res, message="Success getting allocation")
 
 
-@router.post("", response_model=NoDataResponse)
+@router.post("", response_model=NoDataResponse, dependencies=[Depends(bearer_auth)])
 def submit_allocation(
     request: Request,
     submit_allocation_request: SubmitAllocationRequest,

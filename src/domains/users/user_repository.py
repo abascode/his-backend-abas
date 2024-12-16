@@ -7,15 +7,15 @@ from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 from src.config.config import get_config
 from src.dependencies.database_dependency import get_va_db
+from src.domains.users.entities.users import User
 from src.domains.users.user_interface import IUserRepository
-from src.models.dtos.iam_dto import IamUserDto
+from src.models.dtos.iam_dto import IamUserDto, IamPermission
 from src.models.responses.auth_response import LoginResponse
 
 
 class UserRepository(IUserRepository):
-
-    def __init__(self, get_va_db: Session = Depends(get_va_db)):
-        self.get_va_db = get_va_db
+    def __init__(self, va_db: Session = Depends(get_va_db)):
+        self.va_db = va_db
 
     def get_va_db(self, request: Request) -> Session:
         return (
@@ -59,18 +59,48 @@ class UserRepository(IUserRepository):
             if len(data["rolesdivision"]) == 0:
                 return None
 
+            roledivision_role_ids = [sub["role_id"] for sub in data["rolesdivision"]]
+            intersect_role_id = list(set(roledivision_role_ids))
+
+            if len(intersect_role_id) == 0:
+                return None
+
             return IamUserDto(
                 id=data["id"],
                 name=data["name"],
                 username=data["username"],
                 email=data["email"],
                 last_login_at=data["last_login_at"],
+                role_id=intersect_role_id[0],
                 division_id=data["division_id"],
                 department_id=data["department_id"],
                 role_name=data["role_name"],
+                permissions=[IamPermission(**i) for i in data["permissions"]],
             )
         except requests.exceptions.Timeout:
             raise HTTPException(
                 status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="Outbound Timeout: iam/v1/verify-user",
             )
+
+    def upsert_user(self, request: Request, user_dto: IamUserDto):
+        user = (
+            self.get_va_db(request)
+            .query(User)
+            .filter(User.id == user_dto.username)
+            .first()
+        )
+
+        if user is None:
+            user = User(
+                id=user_dto.username,
+                role_id=user_dto.role_id,
+                name=user_dto.name,
+                email=user_dto.email,
+            )
+            self.get_va_db(request).add(user)
+
+        else:
+            user.name = user_dto.name
+            user.role_id = user_dto.role_id
+            user.email = user_dto.email
