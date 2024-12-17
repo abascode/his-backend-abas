@@ -1,7 +1,9 @@
+from datetime import datetime
 from typing import List
 
 from pydantic import BaseModel
 
+from src.domains.allocations.enums import AllocationApprovalFlagEnum
 from src.models.responses.basic_response import TextValueResponse
 
 
@@ -49,6 +51,16 @@ class GetAllocationAdjustmentResponse(BaseModel):
     models: List[AllocationAdjustmentModelResponse]
 
 
+class AllocationApprovalResponse(BaseModel):
+    id: str
+    approver: TextValueResponse | None
+    approved_at: datetime | None
+    approved_comment: str | None
+    approval_flag: AllocationApprovalFlagEnum
+    role: TextValueResponse
+
+
 class GetAllocationResponse(BaseModel):
+    approvals: List[AllocationApprovalResponse]
     adjustments: List[GetAllocationAdjustmentResponse]
     targets: List[AllocationTargetMonthResponse]

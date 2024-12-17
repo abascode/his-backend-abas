@@ -23,6 +23,7 @@ from src.domains.forecasts.forecast_interface import IForecastRepository
 from src.domains.forecasts.forecast_repository import ForecastRepository
 from src.domains.masters.master_interface import IMasterRepository
 from src.domains.masters.master_repository import MasterRepository
+from src.domains.users.enums import RoleDict
 from src.models.requests.allocation_request import (
     GetAllocationRequest,
     SubmitAllocationRequest,
@@ -37,6 +38,7 @@ from src.models.responses.allocation_response import (
     GetAllocationResponse,
     AllocationTargetMonthMonthResponse,
     AllocationTargetMonthResponse,
+    AllocationApprovalResponse,
 )
 from src.models.responses.basic_response import TextValueResponse
 from src.shared.enums import Database
@@ -72,6 +74,28 @@ class AllocationUseCase(IAllocationUseCase):
         monthly_target_data = self.allocation_repo.get_allocation_monthly_target(
             request, get_allocation_request
         )
+
+        approval_data = self.allocation_repo.get_allocation_approvals(
+            request, get_allocation_request.month, get_allocation_request.year
+        )
+
+        approvals = [
+            AllocationApprovalResponse(
+                id=i.id,
+                approver=(
+                    TextValueResponse(text=i.approver.id, value=i.approver.name)
+                    if i.approver is not None
+                    else None
+                ),
+                approved_at=i.approved_at,
+                approved_comment=i.approved_comment,
+                approval_flag=i.approval_flag,
+                role=TextValueResponse(
+                    text=RoleDict.get(i.role_id, "-"), value=i.role_id
+                ),
+            )
+            for i in approval_data
+        ]
 
         total_alloc_map = {}
         dealer_adjustment_map = {}
@@ -225,7 +249,9 @@ class AllocationUseCase(IAllocationUseCase):
 
             targets.append(target)
 
-        return GetAllocationResponse(adjustments=adjustments, targets=targets)
+        return GetAllocationResponse(
+            approvals=approvals, adjustments=adjustments, targets=targets
+        )
 
     def upsert_monthly_target(self, request, file: UploadFile, month: int, year: int):
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
@@ -441,18 +467,48 @@ class AllocationUseCase(IAllocationUseCase):
                 status_code=http.HTTPStatus.NOT_FOUND, detail="Forecast is not found"
             )
 
-        payload = {"data": []}
+        approvals = self.allocation_repo.get_allocation_approvals(
+            request, approval_request.month, approval_request.year
+        )
 
-        for i in forecast.details:
-            if i.deletable == 0:
-                temp = {
-                    "RECORD_ID": i.id,
-                    "DEALER_FORECAST_ID": forecast.id,
-                    "MODEL_VARIANT": i.model_id,
-                }
-                for j in i.months:
-                    if j.deletable == 0:
-                        temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = j.hmsi_allocation
-                payload["data"].append(temp)
+        if len(approvals) == 0:
+            raise HTTPException(
+                status_code=http.HTTPStatus.BAD_REQUEST,
+                detail="Allocation is not submitted",
+            )
 
-        self.allocation_repo.approve_allocation_data(request, payload)
+        unapproved_approvals = [i for i in approvals if i.approved_at is None]
+
+        if len(unapproved_approvals) > 0:
+            if unapproved_approvals[0].role_id != request.state.user.role_id:
+                raise HTTPException(
+                    status_code=http.HTTPStatus.FORBIDDEN,
+                    detail="You are not authorized to approve this allocation",
+                )
+            else:
+                unapproved_approvals[0].approved_at = datetime.now()
+                unapproved_approvals[0].approver_id = request.state.user.username
+                unapproved_approvals[0].approval_flag = (
+                    AllocationApprovalFlagEnum.APPROVED
+                )
+
+        unapproved_approvals = [i for i in approvals if i.approved_at is None]
+
+        if len(unapproved_approvals) == 0:
+            payload = {"data": []}
+
+            for i in forecast.details:
+                if i.deletable == 0:
+                    temp = {
+                        "RECORD_ID": i.id,
+                        "DEALER_FORECAST_ID": forecast.id,
+                        "MODEL_VARIANT": i.model_id,
+                    }
+                    for j in i.months:
+                        if j.deletable == 0:
+                            temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = (
+                                j.hmsi_allocation
+                            )
+                    payload["data"].append(temp)
+
+            self.allocation_repo.approve_allocation_data(request, payload)
