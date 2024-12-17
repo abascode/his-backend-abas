@@ -14,6 +14,7 @@ from src.models.requests.allocation_request import (
     GetAllocationRequest,
     SubmitAllocationRequest,
 )
+from src.models.requests.forecast_request import ApprovalAllocationRequest
 from src.models.responses.allocation_response import GetAllocationAdjustmentResponse
 
 
@@ -34,6 +35,12 @@ class IAllocationUseCase:
     def submit_allocation(
         self, request: Request, submit_allocation_request: SubmitAllocationRequest
     ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def approve_allocation(
+        self, request: Request, approval_request: ApprovalAllocationRequest
+    ):
         pass
 
 
@@ -87,5 +94,13 @@ class IAllocationRepository:
     @abc.abstractmethod
     def create_allocation_approvals(
         self, request: Request, approvals: List[AllocationApproval]
+    ):
+        pass
+
+    @abc.abstractmethod
+    def approve_allocation_data(
+        self,
+        request: Request,
+        payload: dict,
     ):
         pass

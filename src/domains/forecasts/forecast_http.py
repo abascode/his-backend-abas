@@ -92,37 +92,3 @@ def confirm_forecast(
     return PdfResponse(
         message="Success confirming forecast", document_link="https://www.google.com"
     )
-
-
-@router.post(
-    "/approve",
-    response_model=NoDataResponse,
-    summary="Approve Allocation",
-    description="Approve Allocation",
-    # dependencies=[Depends(api_key_auth)],
-)
-def approve_forecast(
-    request: Request,
-    approval_request: ApprovalAllocationRequest,
-    approval_uc: IForecastUseCase = Depends(ForecastUseCase),
-) -> NoDataResponse:
-    approval_uc.approve_allocation(request, approval_request)
-
-    return NoDataResponse(message="Success approving allocation data")
-
-
-@router.get(
-    "/allocations",
-    response_model=NoDataResponse,
-    summary="Approve Allocation",
-    description="Approve Allocation",
-    dependencies=[Depends(api_key_auth)],
-)
-def get_allocations(
-    request: Request,
-    query: GetAllocationRequest = Depends(),
-    uc: IForecastUseCase = Depends(ForecastUseCase),
-) -> NoDataResponse:
-    uc.approve_allocation(request, approval_request)
-
-    return NoDataResponse(message="Success getting allocation data")

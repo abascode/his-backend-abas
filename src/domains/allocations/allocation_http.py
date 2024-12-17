@@ -33,6 +33,23 @@ router = APIRouter(prefix="/api/allocations", tags=["Allocation"])
 
 
 @router.post(
+    "/approve",
+    response_model=NoDataResponse,
+    summary="Approve Allocation",
+    description="Approve Allocation",
+    # dependencies=[Depends(api_key_auth)],
+)
+def approve_allocation(
+    request: Request,
+    approval_request: ApprovalAllocationRequest,
+    uc: IAllocationUseCase = Depends(AllocationUseCase),
+) -> NoDataResponse:
+    uc.approve_allocation(request, approval_request)
+
+    return NoDataResponse(message="Success approving allocation data")
+
+
+@router.post(
     "/monthly-target",
     response_model=NoDataResponse,
     summary="Upsert Monthly Target",

@@ -28,6 +28,7 @@ from src.models.requests.allocation_request import (
     SubmitAllocationRequest,
     SubmitAllocationAdjustmentRequest,
 )
+from src.models.requests.forecast_request import ApprovalAllocationRequest
 from src.models.responses.allocation_response import (
     GetAllocationAdjustmentResponse,
     AllocationAdjustmentMonthResponse,
@@ -427,3 +428,33 @@ class AllocationUseCase(IAllocationUseCase):
                 self.allocation_repo.create_allocation_approvals(request, approvals)
 
         commit(request, Database.VEHICLE_ALLOCATION)
+
+    def approve_allocation(
+        self, request: Request, approval_request: ApprovalAllocationRequest
+    ) -> None:
+        forecast = self.forecast_repo.find_forecast(
+            request, month=approval_request.month, year=approval_request.year
+        )
+
+        if forecast is None:
+            raise HTTPException(
+                status_code=http.HTTPStatus.NOT_FOUND, detail="Forecast is not found"
+            )
+
+        payload = {"data": []}
+
+        for i in forecast.details:
+            if i.deletable == 0:
+                temp = {
+                    "RECORD_ID": i.id,
+                    "DEALER_FORECAST_ID": forecast.id,
+                    "MODEL_VARIANT": i.model_id,
+                }
+                for j in i.months:
+                    if j.deletable == 0:
+                        temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = j.hmsi_allocation
+                payload["data"].append(temp)
+
+        self.forecast_repo.approve_allocation_data(
+            request, payload, approval_request.month, approval_request.year
+        )

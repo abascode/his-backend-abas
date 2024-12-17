@@ -1,10 +1,12 @@
 from typing import List, Type
 
-from fastapi import Depends
+import requests
+from fastapi import Depends, HTTPException
 from sqlalchemy import func, Integer, and_, cast, select, case, Float, text
 from sqlalchemy.orm import Session, aliased
 from starlette.requests import Request
 
+from src.config.config import get_config
 from src.dependencies.database_dependency import get_va_db
 from src.domains.allocations.allocation_interface import IAllocationRepository
 from src.domains.allocations.entities.allocation_approval_matrix import (
@@ -422,3 +424,26 @@ class AllocationRepository(IAllocationRepository):
         for i in approvals:
             self.get_va_db(request).add(i)
             self.get_va_db(request).flush()
+
+    def approve_allocation_data(
+        self,
+        request: Request,
+        payload: dict,
+    ):
+        config = get_config()
+        url = config.outbound["hoyu"].base_url + "/ords/hmsi/dealer_forcast/allocation"
+
+        response = requests.post(
+            url,
+            json=payload,
+            auth=(
+                config.outbound["hoyu"].username,
+                config.outbound["hoyu"].password,
+            ),
+        )
+
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail="Outbound Error: " + url + " " + response.text,
+            )

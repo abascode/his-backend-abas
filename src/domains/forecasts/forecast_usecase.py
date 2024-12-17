@@ -74,7 +74,7 @@ class ForecastUseCase(IForecastUseCase):
     ) -> None:
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
 
-        forecast = self.forecast_repo.get_forecast(
+        forecast = self.forecast_repo.find_forecast(
             request, create_forecast_request.record_id
         )
         dealer = self.master_repo.upsert_dealer(
@@ -360,36 +360,6 @@ class ForecastUseCase(IForecastUseCase):
                             ]["ws_priv_conf"]
 
         commit(request, Database.VEHICLE_ALLOCATION)
-
-    def approve_allocation(
-        self, request: Request, approval_request: ApprovalAllocationRequest
-    ) -> None:
-        forecast = self.forecast_repo.find_forecast(
-            request, month=approval_request.month, year=approval_request.year
-        )
-
-        if forecast is None:
-            raise HTTPException(
-                status_code=http.HTTPStatus.NOT_FOUND, detail="Forecast is not found"
-            )
-
-        payload = {"data": []}
-
-        for i in forecast.details:
-            if i.deletable == 0:
-                temp = {
-                    "RECORD_ID": i.id,
-                    "DEALER_FORECAST_ID": forecast.id,
-                    "MODEL_VARIANT": i.model_id,
-                }
-                for j in i.months:
-                    if j.deletable == 0:
-                        temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = j.hmsi_allocation
-                payload["data"].append(temp)
-
-        self.forecast_repo.approve_allocation_data(
-            request, payload, approval_request.month, approval_request.year
-        )
 
     def archive_forecast(self, request: Request, forecast: Forecast):
         archive = ForecastArchive(

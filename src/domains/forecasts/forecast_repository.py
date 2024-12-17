@@ -195,28 +195,3 @@ class ForecastRepository(IForecastRepository):
 
     def add_forecast_archive(self, request: Request, forecast_archive: ForecastArchive):
         self.get_va_db(request).add(forecast_archive)
-
-    def approve_allocation_data(
-        self,
-        request: Request,
-        payload: dict,
-        month: int,
-        year: int,
-    ):
-        config = get_config()
-        url = config.outbound["hoyu"].base_url + "/ords/hmsi/dealer_forcast/allocation"
-
-        response = requests.post(
-            url,
-            json=payload,
-            auth=(
-                config.outbound["hoyu"].username,
-                config.outbound["hoyu"].password,
-            ),
-        )
-
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=response.status_code,
-                detail="Outbound Error: " + url + " " + response.text,
-            )
