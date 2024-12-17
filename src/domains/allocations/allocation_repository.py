@@ -102,11 +102,18 @@ class AllocationRepository(IAllocationRepository):
                     (
                         (
                             total_ws_alias.c.total_ws_sum > 0,
-                            cast(func.coalesce(ForecastDetailMonth.total_ws, 0), Float)
-                            / cast(
-                                func.coalesce(total_ws_alias.c.total_ws_sum, 0), Float
-                            )
-                            * 100,
+                            cast(
+                                cast(
+                                    func.coalesce(ForecastDetailMonth.total_ws, 0),
+                                    Float,
+                                )
+                                / cast(
+                                    func.coalesce(total_ws_alias.c.total_ws_sum, 0),
+                                    Float,
+                                )
+                                * 100,
+                                Integer,
+                            ),
                         )
                     ),
                     else_=0,
@@ -117,36 +124,46 @@ class AllocationRepository(IAllocationRepository):
                             (
                                 total_ws_alias.c.total_ws_sum > 0,
                                 cast(
-                                    (
+                                    cast(
                                         (
-                                            func.coalesce(
-                                                SlotCalculationDetail.take_off, 0
+                                            (
+                                                func.coalesce(
+                                                    SlotCalculationDetail.take_off, 0
+                                                )
+                                                + func.coalesce(
+                                                    SlotCalculationDetail.bo, 0
+                                                )
                                             )
-                                            + func.coalesce(SlotCalculationDetail.bo, 0)
+                                            * StockPilot.percentage
                                         )
-                                        * StockPilot.percentage
-                                    )
-                                    - (
-                                        (
-                                            func.coalesce(SlotCalculationDetail.soa, 0)
-                                            + func.coalesce(SlotCalculationDetail.oc, 0)
-                                            + func.coalesce(
-                                                SlotCalculationDetail.booking_prospect,
+                                        - (
+                                            (
+                                                func.coalesce(
+                                                    SlotCalculationDetail.soa, 0
+                                                )
+                                                + func.coalesce(
+                                                    SlotCalculationDetail.oc, 0
+                                                )
+                                                + func.coalesce(
+                                                    SlotCalculationDetail.booking_prospect,
+                                                    0,
+                                                )
+                                            )
+                                            * func.coalesce(
+                                                OrderConfiguration.forecast_percentage,
                                                 0,
                                             )
-                                        )
-                                        * func.coalesce(
-                                            OrderConfiguration.forecast_percentage, 0
-                                        )
-                                        / 100
-                                    ),
-                                    Float,
-                                )
-                                / cast(
-                                    func.coalesce(total_ws_alias.c.total_ws_sum, 0),
-                                    Float,
-                                )
-                                * 100,
+                                            / 100
+                                        ),
+                                        Float,
+                                    )
+                                    / cast(
+                                        func.coalesce(total_ws_alias.c.total_ws_sum, 0),
+                                        Float,
+                                    )
+                                    * 100,
+                                    Integer,
+                                ),
                             )
                         ),
                         else_=0,

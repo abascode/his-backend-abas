@@ -31,4 +31,3 @@ class ForecastDetailArchive(BaseModel):
     updated_at: MappedColumn[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    deletable: MappedColumn[int] = mapped_column(Integer, server_default=text("0"))

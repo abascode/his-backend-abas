@@ -15,6 +15,12 @@ from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDet
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.domains.forecasts.entities.va_forecasts_archive import ForecastArchive
+from src.domains.forecasts.entities.va_forecasts_detail_archive import (
+    ForecastDetailArchive,
+)
+from src.domains.forecasts.entities.va_forecasts_detail_month_archive import (
+    ForecastDetailMonthArchive,
+)
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.forecast_interface import (
@@ -374,7 +380,50 @@ class ForecastUseCase(IForecastUseCase):
             deleted_by=forecast.deleted_by,
             created_at=forecast.created_at,
             updated_at=forecast.updated_at,
-            deletable=forecast.deletable,
         )
 
-        # self.forecast_repo.add_forecast_archive(request, data)
+        archive_details = []
+        archive_month_details = []
+
+        for i in forecast.details:
+            archive_details.append(
+                ForecastDetailArchive(
+                    record_id=i.id,
+                    model_id=i.model_id,
+                    end_stock=i.end_stock,
+                    forecast_id=i.forecast_id,
+                    created_by=i.created_by,
+                    updated_by=i.updated_by,
+                    deleted_by=i.deleted_by,
+                    created_at=i.created_at,
+                    updated_at=i.updated_at,
+                )
+            )
+
+            for j in i.months:
+                archive_month_details.append(
+                    ForecastDetailMonthArchive(
+                        record_id=j.id,
+                        forecast_month=j.forecast_month,
+                        forecast_detail_id=j.forecast_detail_id,
+                        rs_gov=j.rs_gov,
+                        ws_gov=j.ws_gov,
+                        rs_priv=j.rs_priv,
+                        ws_priv=j.ws_priv,
+                        total_rs=j.total_rs,
+                        prev_rs_gov=j.prev_rs_gov,
+                        prev_rs_priv=j.prev_rs_priv,
+                        total_prev_rs=j.total_prev_rs,
+                        total_ws=j.total_ws,
+                        total_prev_final_conf_allocation=j.total_prev_final_conf_allocation,
+                        new_ws_req=j.new_ws_req,
+                        hmsi_allocation=j.hmsi_allocation,
+                        created_by=j.created_by,
+                        updated_by=j.updated_by,
+                        deleted_by=j.deleted_by,
+                        created_at=j.created_at,
+                        updated_at=j.updated_at,
+                    )
+                )
+
+        self.forecast_repo.add_forecast_archive(request, data)

@@ -7,6 +7,12 @@ from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDet
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.domains.forecasts.entities.va_forecasts_archive import ForecastArchive
+from src.domains.forecasts.entities.va_forecasts_detail_archive import (
+    ForecastDetailArchive,
+)
+from src.domains.forecasts.entities.va_forecasts_detail_month_archive import (
+    ForecastDetailMonthArchive,
+)
 from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.models.requests.allocation_request import GetAllocationRequest
@@ -113,5 +119,11 @@ class IForecastRepository:
         pass
 
     @abc.abstractmethod
-    def add_forecast_archive(self, request: Request, forecast_archive: ForecastArchive):
+    def add_forecast_archive(
+        self,
+        request: Request,
+        forecast_archive: ForecastArchive,
+        forecast_detail_archive: List[ForecastDetailArchive],
+        forecast_detail_month_archive: List[ForecastDetailMonthArchive],
+    ) -> None:
         pass

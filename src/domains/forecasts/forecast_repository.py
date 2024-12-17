@@ -15,6 +15,12 @@ from src.domains.forecasts.entities.va_forecast_detail_months import ForecastDet
 from src.domains.forecasts.entities.va_forecast_details import ForecastDetail
 from src.domains.forecasts.entities.va_forecasts import Forecast
 from src.domains.forecasts.entities.va_forecasts_archive import ForecastArchive
+from src.domains.forecasts.entities.va_forecasts_detail_archive import (
+    ForecastDetailArchive,
+)
+from src.domains.forecasts.entities.va_forecasts_detail_month_archive import (
+    ForecastDetailMonthArchive,
+)
 from src.domains.forecasts.forecast_interface import IForecastRepository
 from src.domains.masters.entities.va_dealers import Dealer
 from src.models.requests.forecast_request import (
@@ -83,6 +89,7 @@ class ForecastRepository(IForecastRepository):
 
         if year is not None:
             query = query.filter(Forecast.year == year)
+
 
         return query.all()
 
@@ -193,5 +200,14 @@ class ForecastRepository(IForecastRepository):
             for month, year, dealer_submit, remaining_dealer_submit, order_confirmation in res
         ], cnt
 
-    def add_forecast_archive(self, request: Request, forecast_archive: ForecastArchive):
+    def add_forecast_archive(
+        self,
+        request: Request,
+        forecast_archive: ForecastArchive,
+        forecast_detail_archive: List[ForecastDetailArchive],
+        forecast_detail_month_archive: List[ForecastDetailMonthArchive],
+    ) -> None:
         self.get_va_db(request).add(forecast_archive)
+        self.get_va_db(request).add_all(forecast_detail_archive)
+        self.get_va_db(request).add_all(forecast_detail_month_archive)
+        self.get_va_db(request).flush()
