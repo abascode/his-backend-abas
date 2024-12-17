@@ -1,4 +1,7 @@
-from typing import List
+import re
+from typing import List, Dict
+
+import pandas
 from fastapi import Depends, HTTPException, Request, UploadFile
 import os
 import http
@@ -12,6 +15,7 @@ from src.domains.calculations.entities.va_slot_calculation_details import (
     SlotCalculationDetail,
 )
 from src.domains.calculations.entities.va_slot_calculations import SlotCalculation
+from src.domains.masters.entities.va_models import Model
 from src.domains.masters.master_interface import IMasterRepository
 from src.domains.masters.master_repository import MasterRepository
 from src.models.requests.calculation_request import GetCalculationRequest
@@ -40,6 +44,7 @@ from src.shared.utils.file_utils import (
     get_file_extension,
     save_upload_file,
 )
+from src.shared.utils.storage_utils import is_file_exist
 from src.shared.utils.xid import generate_xid
 from pathlib import Path
 
@@ -54,21 +59,201 @@ class CalculationUseCase(ICalculationUseCase):
         self.calculation_repo = calculation_repo
         self.master_repository = master_repository
 
-    # TODO : waiting template finalization
     def upsert_bo_soa_oc_booking_prospect(
-        self, request, file: UploadFile, month: int, year: int
+        self, request, file: str, month: int, year: int
     ):
-        begin_transaction(request, Database.VEHICLE_ALLOCATION)
+        if not is_file_exist(file):
+            raise HTTPException(
+                status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Excel file is not found",
+            )
 
-        slot_calculation = self.calculation_repo.find_calculation(
+        df = pandas.read_excel(os.getcwd() + "/storage" + file)
+        columns = [
+            "SO Number",
+            "Status SO",
+            "Status Pilot",
+            "Dealer",
+            "Model",
+            "Cat",
+            "Region",
+            "Customer Name",
+            "Vin Year Rev",
+            "SRC",
+            "Source",
+            "Year",
+        ]
+
+        not_found_index = [i for i in columns if i not in df.columns.tolist()]
+        forecast_months = [
+            i for i in df.columns.tolist() if re.match(r"^\d{4}-(0[1-9]|1[0-2])$", i)
+        ]
+
+        if len(not_found_index) > 0:
+            raise HTTPException(
+                http.HTTPStatus.BAD_REQUEST,
+                detail=f"{not_found_index[0]} field is required.",
+            )
+
+        calculation_details: List[SlotCalculationDetail] = []
+        calculation_detail_map = {}
+
+        model_dict: Dict[str, Model] = {}
+
+        for idx, row in df.iterrows():
+            so_number = row["SO Number"]
+            status_so = row["Status SO"]
+            status_pilot = row["Status Pilot"]
+            dealer = row["Dealer"]
+            model_id = row["Model"]
+            cat = row["Cat"]
+            region = row["Region"]
+            customer_name = row["Customer Name"]
+            vin_year_rev = row["Vin Year Rev"]
+            src = row["SRC"]
+            source = row["Source"]
+            row_year = row["Year"]
+
+            if model_id not in model_dict:
+                model = self.master_repository.find_model(request, model_id)
+                if model is None:
+                    raise HTTPException(
+                        http.HTTPStatus.BAD_REQUEST,
+                        detail=f"Model {model_id} is not found",
+                    )
+                model_dict[model_id] = model
+
+            model = model_dict[model_id]
+
+            is_soa = (
+                so_number[:2].upper() == "SO"
+                and status_so.upper() == "ACCEPTED"
+                and status_pilot.upper() == "PILOT"
+                and source.upper() == "FCST ORDER"
+            )
+
+            is_so = (
+                so_number[:2].upper() == "SO"
+                and status_so.upper() == "PROSPECT"
+                and status_pilot.upper() == "PILOT"
+                and source.upper() == "FCST ORDER"
+            )
+
+            is_oc = (
+                so_number[:2].upper() != "SO"
+                and (status_so.upper() == "ACCEPTED" or status_so.upper() == "PROSPECT")
+                and status_pilot.upper() == "PILOT"
+                and source.upper() == "FCST ORDER"
+            )
+
+            is_booking = (
+                so_number[:2].upper() != "SO" and source.upper() == "URGENT ORDER"
+            )
+
+            for j in forecast_months:
+                forecast_month = get_month_difference(f"{year}-{month}", j)
+
+                if forecast_month < 0:
+                    raise HTTPException(
+                        status_code=http.HTTPStatus.BAD_REQUEST,
+                        detail=f"Forecast month cannot be less than the current month",
+                    )
+
+                if model.id not in calculation_detail_map:
+                    calculation_detail_map[model.id] = {}
+
+                if forecast_month not in calculation_detail_map[model.id]:
+                    calculation_detail_map[model.id][forecast_month] = (
+                        SlotCalculationDetail(
+                            model_id=model.id,
+                            forecast_month=forecast_month,
+                            soa=0,
+                            bo=0,
+                            oc=0,
+                            so=0,
+                            booking_prospect=0,
+                        )
+                    )
+
+                calculation_detail_map[model.id][forecast_month].soa += (
+                    row[j] if is_soa and not pandas.isna(row[j]) else 0
+                )
+                calculation_detail_map[model.id][forecast_month].bo += 0
+                calculation_detail_map[model.id][forecast_month].oc += (
+                    row[j] if is_oc and not pandas.isna(row[j]) else 0
+                )
+                calculation_detail_map[model.id][forecast_month].so += (
+                    row[j] if is_so and not pandas.isna(row[j]) else 0
+                )
+                calculation_detail_map[model.id][forecast_month].booking_prospect += (
+                    row[j] if is_booking and not pandas.isna(row[j]) else 0
+                )
+
+        calculation = self.calculation_repo.find_calculation(
             request, month=month, year=year
         )
 
-        is_create = (
-            slot_calculation.details is None or len(slot_calculation.details) == 0
-        )
+        begin_transaction(request, Database.VEHICLE_ALLOCATION)
 
-        pass
+        if calculation is None:
+            self.calculation_repo.create_calculation(
+                request,
+                SlotCalculation(month=month, year=year, details=calculation_details),
+            )
+        else:
+            detail_maps = {}
+            for i in calculation.details:
+                if i.deletable == 0:
+                    if i.model_id not in detail_maps:
+                        detail_maps[i.model_id] = {}
+                    if i.forecast_month not in detail_maps[i.model_id]:
+                        detail_maps[i.model_id][i.forecast_month] = i
+
+            for model_id, forecast_month_map in calculation_detail_map.items():
+                if model_id in detail_maps:
+                    for (
+                        forecast_month,
+                        calculation_detail,
+                    ) in forecast_month_map.items():
+                        calculation_detail.slot_calculation_id = calculation.id
+                        if forecast_month not in detail_maps[model_id]:
+                            self.calculation_repo.create_calculation_detail(
+                                request, calculation_detail
+                            )
+                        else:
+                            detail_maps[model_id][forecast_month].model_id = (
+                                calculation_detail_map[model_id][
+                                    forecast_month
+                                ].model_id
+                            )
+                            detail_maps[model_id][forecast_month].soa = (
+                                calculation_detail_map[model_id][forecast_month].soa
+                            )
+                            detail_maps[model_id][forecast_month].bo = (
+                                calculation_detail_map[model_id][forecast_month].bo
+                            )
+                            detail_maps[model_id][forecast_month].oc = (
+                                calculation_detail_map[model_id][forecast_month].oc
+                            )
+                            detail_maps[model_id][forecast_month].so = (
+                                calculation_detail_map[model_id][forecast_month].so
+                            )
+                            detail_maps[model_id][forecast_month].booking_prospect = (
+                                calculation_detail_map[model_id][
+                                    forecast_month
+                                ].booking_prospect
+                            )
+                else:
+                    for (
+                        forecast_month,
+                        calculation_detail,
+                    ) in forecast_month_map.items():
+                        calculation_detail.slot_calculation_id = calculation.id
+                        self.calculation_repo.create_calculation_detail(
+                            request, calculation_detail
+                        )
+
+        commit(request, Database.VEHICLE_ALLOCATION)
 
     def upsert_take_off_data(
         self, request: Request, file: UploadFile, month: int, year: int

@@ -17,7 +17,7 @@ class ICalculationUseCase:
 
     @abc.abstractmethod
     def upsert_bo_soa_oc_booking_prospect(
-        self, request: Request, file: UploadFile, month: int, year: int
+        self, request: Request, path: str, month: int, year: int
     ) -> None:
         pass
 

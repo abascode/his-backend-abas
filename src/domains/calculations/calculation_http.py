@@ -1,6 +1,7 @@
+import http
 import math
 
-from fastapi import APIRouter, Depends, Form, UploadFile
+from fastapi import APIRouter, Depends, Form, UploadFile, HTTPException
 from starlette.requests import Request
 
 from src.domains.calculations.calculation_interface import ICalculationUseCase
@@ -21,6 +22,7 @@ from src.models.responses.basic_response import (
 )
 from src.models.responses.calculation_response import GetCalculationResponse
 from src.models.responses.forecast_response import GetForecastSummaryResponse
+from src.shared.utils.storage_utils import save_file
 
 router = APIRouter(prefix="/api/calculations", tags=["Calculations"])
 
@@ -57,7 +59,18 @@ def upsert_soa_bo_oc_booking_data(
     year: int = Form(...),
     calculation_uc: ICalculationUseCase = Depends(CalculationUseCase),
 ) -> NoDataResponse:
-    calculation_uc.upsert_bo_soa_oc_booking_prospect(request, file, month, year)
+    if (
+        file.content_type
+        != "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ):
+        raise HTTPException(
+            status_code=http.HTTPStatus.BAD_REQUEST,
+            detail="Please upload excel file",
+        )
+
+    path = save_file("calculations", file)
+    calculation_uc.upsert_bo_soa_oc_booking_prospect(request, path, month, year)
+    return NoDataResponse(message="Success uploading SOA, SO, BO, OC, Booking data")
 
 
 @router.get(

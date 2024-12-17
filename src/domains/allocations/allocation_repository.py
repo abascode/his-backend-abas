@@ -460,6 +460,7 @@ class AllocationRepository(IAllocationRepository):
         )
 
         if response.status_code != 200:
+            print(response.status_code)
             raise HTTPException(
                 status_code=response.status_code,
                 detail="Outbound Error: " + url + " " + response.text,

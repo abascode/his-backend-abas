@@ -467,48 +467,46 @@ class AllocationUseCase(IAllocationUseCase):
                 status_code=http.HTTPStatus.NOT_FOUND, detail="Forecast is not found"
             )
 
-        approvals = self.allocation_repo.get_allocation_approvals(
-            request, approval_request.month, approval_request.year
-        )
+        # approvals = self.allocation_repo.get_allocation_approvals(
+        #     request, approval_request.month, approval_request.year
+        # )
+        #
+        # if len(approvals) == 0:
+        #     raise HTTPException(
+        #         status_code=http.HTTPStatus.BAD_REQUEST,
+        #         detail="Allocation is not submitted",
+        #     )
+        #
+        # unapproved_approvals = [i for i in approvals if i.approved_at is None]
+        #
+        # if len(unapproved_approvals) > 0:
+        #     if unapproved_approvals[0].role_id != request.state.user.role_id:
+        #         raise HTTPException(
+        #             status_code=http.HTTPStatus.FORBIDDEN,
+        #             detail="You are not authorized to approve this allocation",
+        #         )
+        #     else:
+        #         unapproved_approvals[0].approved_at = datetime.now()
+        #         unapproved_approvals[0].approver_id = request.state.user.username
+        #         unapproved_approvals[0].approval_flag = (
+        #             AllocationApprovalFlagEnum.APPROVED
+        #         )
+        #
+        # unapproved_approvals = [i for i in approvals if i.approved_at is None]
+        #
+        # if len(unapproved_approvals) == 0:
+        payload = {"data": []}
 
-        if len(approvals) == 0:
-            raise HTTPException(
-                status_code=http.HTTPStatus.BAD_REQUEST,
-                detail="Allocation is not submitted",
-            )
+        for i in forecast.details:
+            if i.deletable == 0:
+                temp = {
+                    "RECORD_ID": i.id,
+                    "DEALER_FORECAST_ID": forecast.id,
+                    "MODEL_VARIANT": i.model_id,
+                }
+                for j in i.months:
+                    if j.deletable == 0:
+                        temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = j.hmsi_allocation
+                payload["data"].append(temp)
 
-        unapproved_approvals = [i for i in approvals if i.approved_at is None]
-
-        if len(unapproved_approvals) > 0:
-            if unapproved_approvals[0].role_id != request.state.user.role_id:
-                raise HTTPException(
-                    status_code=http.HTTPStatus.FORBIDDEN,
-                    detail="You are not authorized to approve this allocation",
-                )
-            else:
-                unapproved_approvals[0].approved_at = datetime.now()
-                unapproved_approvals[0].approver_id = request.state.user.username
-                unapproved_approvals[0].approval_flag = (
-                    AllocationApprovalFlagEnum.APPROVED
-                )
-
-        unapproved_approvals = [i for i in approvals if i.approved_at is None]
-
-        if len(unapproved_approvals) == 0:
-            payload = {"data": []}
-
-            for i in forecast.details:
-                if i.deletable == 0:
-                    temp = {
-                        "RECORD_ID": i.id,
-                        "DEALER_FORECAST_ID": forecast.id,
-                        "MODEL_VARIANT": i.model_id,
-                    }
-                    for j in i.months:
-                        if j.deletable == 0:
-                            temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = (
-                                j.hmsi_allocation
-                            )
-                    payload["data"].append(temp)
-
-            self.allocation_repo.approve_allocation_data(request, payload)
+        self.allocation_repo.approve_allocation_data(request, payload)

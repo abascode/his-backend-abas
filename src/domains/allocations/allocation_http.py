@@ -37,7 +37,7 @@ router = APIRouter(prefix="/api/allocations", tags=["Allocation"])
     response_model=NoDataResponse,
     summary="Approve Allocation",
     description="Approve Allocation",
-    dependencies=[Depends(bearer_auth)],
+    # dependencies=[Depends(bearer_auth)],
 )
 def approve_allocation(
     request: Request,
