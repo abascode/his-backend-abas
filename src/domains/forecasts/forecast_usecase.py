@@ -83,6 +83,7 @@ class ForecastUseCase(IForecastUseCase):
         forecast = self.forecast_repo.find_forecast(
             request, create_forecast_request.record_id
         )
+
         dealer = self.master_repo.upsert_dealer(
             request,
             Dealer(
@@ -91,10 +92,11 @@ class ForecastUseCase(IForecastUseCase):
             ),
         )
 
-        is_create = forecast is None
+        if forecast is not None:
+            self.archive_forecast(request, forecast)
+            self.forecast_repo.delete_forecast(request, forecast)
 
-        if forecast is None:
-            forecast = Forecast()
+        forecast = Forecast()
 
         forecast.id = create_forecast_request.record_id
         forecast.name = create_forecast_request.record_name
@@ -116,84 +118,8 @@ class ForecastUseCase(IForecastUseCase):
             for j in i.months:
                 new_detail_months[i.id][j.forecast_month] = j
 
-        if is_create:
-            forecast.details = list(new_details.values())
-            self.forecast_repo.create_forecast(request, forecast)
-        else:
-            current_details: Dict[str, ForecastDetail] = {
-                i.id: i for i in forecast.details
-            }
-            current_detail_months: Dict[str, Dict[int, ForecastDetailMonth]] = {}
-            for i in current_details.values():
-                if i.id not in current_detail_months:
-                    current_detail_months[i.id] = {}
-                for j in i.months:
-                    current_detail_months[i.id][j.forecast_month] = j
-
-            for current_detail in current_details.values():
-                if current_detail.id not in new_details:
-                    current_detail.deletable = 1
-                    for current_detail_month in current_detail.months:
-                        current_detail_month.deletable = 1
-                else:
-                    for current_detail_month in current_detail.months:
-                        if (
-                            current_detail_month.forecast_month
-                            not in new_detail_months[current_detail.id]
-                        ):
-                            current_detail_month.deletable = 1
-
-            for new_detail in new_details.values():
-                if new_detail.id in current_details:
-                    current_details[new_detail.id].model_id = new_detail.model_id
-                    current_details[new_detail.id].end_stock = new_detail.end_stock
-                    for new_detail_month in new_detail.months:
-                        if (
-                            new_detail_month.forecast_month
-                            in current_detail_months[new_detail.id]
-                        ):
-                            current_detail_month = current_detail_months[new_detail.id][
-                                new_detail_month.forecast_month
-                            ]
-                            current_detail_month.forecast_month = (
-                                new_detail_month.forecast_month
-                            )
-                            current_detail_month.rs_gov = new_detail_month.rs_gov
-                            current_detail_month.ws_gov = new_detail_month.ws_gov
-                            current_detail_month.rs_priv = new_detail_month.rs_priv
-                            current_detail_month.ws_priv = new_detail_month.ws_priv
-                            current_detail_month.total_rs = new_detail_month.total_rs
-                            current_detail_month.prev_rs_gov = (
-                                new_detail_month.prev_rs_gov
-                            )
-                            current_detail_month.prev_rs_priv = (
-                                new_detail_month.prev_rs_priv
-                            )
-                            current_detail_month.total_prev_rs = (
-                                new_detail_month.total_prev_rs
-                            )
-                            current_detail_month.total_ws = new_detail_month.total_ws
-                            current_detail_month.total_prev_final_conf_allocation = (
-                                new_detail_month.total_prev_final_conf_allocation
-                            )
-                            current_detail_month.new_ws_req = (
-                                new_detail_month.new_ws_req
-                            )
-                            current_detail_month.hmsi_allocation = (
-                                new_detail_month.hmsi_allocation
-                            )
-                        else:
-                            print(
-                                new_detail_month.forecast_month,
-                                new_detail_month.forecast_detail_id,
-                            )
-
-                            self.forecast_repo.create_forecast_detail_month(
-                                request, new_detail_month
-                            )
-                else:
-                    new_detail.forecast_id = forecast.id
-                    self.forecast_repo.create_forecast_detail(request, new_detail)
+        forecast.details = list(new_details.values())
+        self.forecast_repo.create_forecast(request, forecast)
         commit(request, Database.VEHICLE_ALLOCATION)
 
     def get_forecast_summary(
@@ -298,6 +224,10 @@ class ForecastUseCase(IForecastUseCase):
                         text=i.model.id,
                         value=i.model.id,
                     ),
+                    category=TextValueResponse(
+                        text=i.model.category_id,
+                        value=i.model.category_id,
+                    ),
                     months=months,
                 )
             )
@@ -307,7 +237,7 @@ class ForecastUseCase(IForecastUseCase):
             month=data.month,
             year=data.year,
             dealer=TextValueResponse(text=data.dealer.name, value=data.dealer.id),
-            models=models,
+            models=sorted(models, key=lambda x: (x.category.text, x.model.text)),
         )
 
     def confirm_forecast(
@@ -426,4 +356,6 @@ class ForecastUseCase(IForecastUseCase):
                     )
                 )
 
-        self.forecast_repo.add_forecast_archive(request, data)
+        self.forecast_repo.add_forecast_archive(
+            request, archive, archive_details, archive_month_details
+        )

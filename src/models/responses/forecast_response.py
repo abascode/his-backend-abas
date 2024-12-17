@@ -24,6 +24,7 @@ class GetForecastDetailMonthResponse(BaseModel):
 class GetForecastDetailResponse(BaseModel):
     id: str
     model: TextValueResponse
+    category: TextValueResponse
     months: List[GetForecastDetailMonthResponse]
 
 

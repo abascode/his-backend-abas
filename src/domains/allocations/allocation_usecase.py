@@ -455,6 +455,4 @@ class AllocationUseCase(IAllocationUseCase):
                         temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = j.hmsi_allocation
                 payload["data"].append(temp)
 
-        self.forecast_repo.approve_allocation_data(
-            request, payload, approval_request.month, approval_request.year
-        )
+        self.allocation_repo.approve_allocation_data(request, payload)

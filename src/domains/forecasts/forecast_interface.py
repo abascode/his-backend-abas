@@ -13,9 +13,6 @@ from src.domains.forecasts.entities.va_forecasts_detail_archive import (
 from src.domains.forecasts.entities.va_forecasts_detail_month_archive import (
     ForecastDetailMonthArchive,
 )
-from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTargetDetail
-from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
-from src.models.requests.allocation_request import GetAllocationRequest
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
@@ -23,7 +20,6 @@ from src.models.requests.forecast_request import (
     ConfirmForecastRequest,
     ApprovalAllocationRequest,
 )
-from src.models.responses.allocation_response import GetAllocationAdjustmentResponse
 from src.models.responses.forecast_response import (
     GetForecastSummaryResponse,
     GetForecastResponse,
@@ -109,16 +105,6 @@ class IForecastRepository:
         pass
 
     @abc.abstractmethod
-    def approve_allocation_data(
-        self,
-        request: Request,
-        payload: dict,
-        month: int,
-        year: int,
-    ):
-        pass
-
-    @abc.abstractmethod
     def add_forecast_archive(
         self,
         request: Request,
@@ -126,4 +112,8 @@ class IForecastRepository:
         forecast_detail_archive: List[ForecastDetailArchive],
         forecast_detail_month_archive: List[ForecastDetailMonthArchive],
     ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def delete_forecast(self, request: Request, forecast: Forecast) -> None:
         pass

@@ -31,7 +31,7 @@ router = APIRouter(prefix="/api/forecasts", tags=["Forecast"])
     response_model=NoDataResponse,
     summary="Upsert Forecast",
     description="Upsert forecast",
-    dependencies=[Depends(api_key_auth)],
+    # dependencies=[Depends(api_key_auth)],
 )
 def upsert_forecast(
     request: Request,

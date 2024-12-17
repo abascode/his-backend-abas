@@ -23,6 +23,7 @@ from src.domains.forecasts.entities.va_forecasts_detail_month_archive import (
 )
 from src.domains.forecasts.forecast_interface import IForecastRepository
 from src.domains.masters.entities.va_dealers import Dealer
+from src.domains.masters.entities.va_models import Model
 from src.models.requests.forecast_request import (
     GetForecastSummaryRequest,
 )
@@ -66,6 +67,13 @@ class ForecastRepository(IForecastRepository):
         if year is not None:
             query = query.filter(Forecast.year == year)
 
+        query = query.join(
+            ForecastDetail,
+            and_(
+                ForecastDetail.forecast_id == Forecast.id, ForecastDetail.deletable == 0
+            ),
+        ).join(Model, and_(Model.id == ForecastDetail.model_id))
+
         return query.first()
 
     def get_forecast(
@@ -89,7 +97,6 @@ class ForecastRepository(IForecastRepository):
 
         if year is not None:
             query = query.filter(Forecast.year == year)
-
 
         return query.all()
 
@@ -210,4 +217,20 @@ class ForecastRepository(IForecastRepository):
         self.get_va_db(request).add(forecast_archive)
         self.get_va_db(request).add_all(forecast_detail_archive)
         self.get_va_db(request).add_all(forecast_detail_month_archive)
+        self.get_va_db(request).flush()
+
+    def delete_forecast(self, request: Request, forecast: Forecast) -> None:
+        for i in forecast.details:
+            self.get_va_db(request).query(ForecastDetailMonth).filter(
+                ForecastDetailMonth.forecast_detail_id.in_([i.id])
+            ).delete()
+
+        self.get_va_db(request).query(ForecastDetail).filter(
+            ForecastDetail.forecast_id.in_([forecast.id])
+        ).delete()
+
+        self.get_va_db(request).query(Forecast).filter(
+            and_(Forecast.id == forecast.id)
+        ).delete()
+
         self.get_va_db(request).flush()
