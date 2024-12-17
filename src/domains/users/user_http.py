@@ -35,6 +35,7 @@ def login(
     "/me",
     summary="Get Authenticated User",
     description="This endpoint returns the currently authenticated user's information.",
+    dependencies=[Depends(bearer_auth)],
 )
 def get_auth_user(
     request: Request,

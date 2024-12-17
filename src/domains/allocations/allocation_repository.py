@@ -1,3 +1,4 @@
+import json
 from typing import List, Type
 
 import requests
@@ -121,50 +122,46 @@ class AllocationRepository(IAllocationRepository):
                 cast(
                     case(
                         (
-                            (
-                                total_ws_alias.c.total_ws_sum > 0,
+                            SlotCalculationDetail.slot_1 != None,
+                            SlotCalculationDetail.slot_1,
+                        ),
+                        (
+                            total_ws_alias.c.total_ws_sum > 0,
+                            cast(
                                 cast(
-                                    cast(
+                                    (
                                         (
-                                            (
-                                                func.coalesce(
-                                                    SlotCalculationDetail.take_off, 0
-                                                )
-                                                + func.coalesce(
-                                                    SlotCalculationDetail.bo, 0
-                                                )
+                                            func.coalesce(
+                                                SlotCalculationDetail.take_off, 0
                                             )
-                                            * StockPilot.percentage
+                                            + func.coalesce(SlotCalculationDetail.bo, 0)
                                         )
-                                        - (
-                                            (
-                                                func.coalesce(
-                                                    SlotCalculationDetail.soa, 0
-                                                )
-                                                + func.coalesce(
-                                                    SlotCalculationDetail.oc, 0
-                                                )
-                                                + func.coalesce(
-                                                    SlotCalculationDetail.booking_prospect,
-                                                    0,
-                                                )
-                                            )
-                                            * func.coalesce(
-                                                OrderConfiguration.forecast_percentage,
+                                        * StockPilot.percentage
+                                    )
+                                    - (
+                                        (
+                                            func.coalesce(SlotCalculationDetail.soa, 0)
+                                            + func.coalesce(SlotCalculationDetail.oc, 0)
+                                            + func.coalesce(
+                                                SlotCalculationDetail.booking_prospect,
                                                 0,
                                             )
-                                            / 100
-                                        ),
-                                        Float,
-                                    )
-                                    / cast(
-                                        func.coalesce(total_ws_alias.c.total_ws_sum, 0),
-                                        Float,
-                                    )
-                                    * 100,
-                                    Integer,
-                                ),
-                            )
+                                        )
+                                        * func.coalesce(
+                                            OrderConfiguration.forecast_percentage,
+                                            0,
+                                        )
+                                        / 100
+                                    ),
+                                    Float,
+                                )
+                                / cast(
+                                    func.coalesce(total_ws_alias.c.total_ws_sum, 0),
+                                    Float,
+                                )
+                                * 100,
+                                Integer,
+                            ),
                         ),
                         else_=0,
                     ),
@@ -261,6 +258,7 @@ class AllocationRepository(IAllocationRepository):
                 SlotCalculationDetail.booking_prospect,
                 ForecastDetail.end_stock,
                 ForecastDetailMonth.id,
+                SlotCalculationDetail.slot_1,
             )
             .order_by(
                 Model.id,
@@ -446,7 +444,7 @@ class AllocationRepository(IAllocationRepository):
         self,
         request: Request,
         payload: dict,
-    ):
+    ) -> dict:
         config = get_config()
         url = config.outbound["hoyu"].base_url + "/ords/hmsi/dealer_forcast/allocation"
 
@@ -460,8 +458,9 @@ class AllocationRepository(IAllocationRepository):
         )
 
         if response.status_code != 200:
-            print(response.status_code)
             raise HTTPException(
                 status_code=response.status_code,
-                detail="Outbound Error: " + url + " " + response.text,
+                detail="Outbound Error: " + url + " " + json.dumps(payload),
             )
+
+        return response.json()

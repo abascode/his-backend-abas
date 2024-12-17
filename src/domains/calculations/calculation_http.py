@@ -4,11 +4,15 @@ import math
 from fastapi import APIRouter, Depends, Form, UploadFile, HTTPException
 from starlette.requests import Request
 
+from src.dependencies.auth_dependency import bearer_auth
 from src.domains.calculations.calculation_interface import ICalculationUseCase
 from src.domains.calculations.calculation_usecase import CalculationUseCase
 from src.domains.forecasts.forecast_interface import IForecastUseCase
 from src.domains.forecasts.forecast_usecase import ForecastUseCase
-from src.models.requests.calculation_request import GetCalculationRequest
+from src.models.requests.calculation_request import (
+    GetCalculationRequest,
+    UpdateCalculationRequest,
+)
 from src.models.requests.forecast_request import (
     CreateForecastRequest,
     GetForecastSummaryRequest,
@@ -87,3 +91,20 @@ def get_calculation_detail(
     data = calculation_uc.get_calculation_detail(request, get_calculation_request)
 
     return BasicResponse(data=data, message="Success getting calculation detail")
+
+
+@router.put(
+    "",
+    response_model=NoDataResponse,
+    summary="Update Calculation",
+    description="Update Calculation",
+    # dependencies=[Depends(bearer_auth)],
+)
+def approve_allocation(
+    request: Request,
+    update_calculation_request: UpdateCalculationRequest,
+    uc: ICalculationUseCase = Depends(CalculationUseCase),
+) -> NoDataResponse:
+    res = uc.update_calculation_detail(request, update_calculation_request)
+
+    return NoDataResponse(message="Success updating calculation detail data")

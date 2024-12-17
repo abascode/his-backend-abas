@@ -41,6 +41,32 @@ class CalculationRepository(ICalculationRepository):
 
         return query.first()
 
+    def find_calculation_detail(
+        self,
+        request: Request,
+        slot_calculation_id: str = None,
+        model_id: str = None,
+        forecast_month: int = None,
+    ) -> SlotCalculationDetail | None:
+        query = (
+            self.get_va_db(request)
+            .query(SlotCalculationDetail)
+            .filter(SlotCalculationDetail.deletable == 0)
+        )
+
+        if slot_calculation_id is not None:
+            query = query.filter(
+                SlotCalculationDetail.slot_calculation_id == slot_calculation_id
+            )
+
+        if model_id is not None:
+            query = query.filter(SlotCalculationDetail.model_id == model_id)
+
+        if forecast_month is not None:
+            query = query.filter(SlotCalculationDetail.forecast_month == forecast_month)
+
+        return query.first()
+
     def create_calculation(
         self, request: Request, calculation: SlotCalculation
     ) -> SlotCalculation:

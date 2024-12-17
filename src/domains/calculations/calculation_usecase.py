@@ -18,7 +18,10 @@ from src.domains.calculations.entities.va_slot_calculations import SlotCalculati
 from src.domains.masters.entities.va_models import Model
 from src.domains.masters.master_interface import IMasterRepository
 from src.domains.masters.master_repository import MasterRepository
-from src.models.requests.calculation_request import GetCalculationRequest
+from src.models.requests.calculation_request import (
+    GetCalculationRequest,
+    UpdateCalculationRequest,
+)
 from src.models.responses.basic_response import TextValueResponse
 from src.models.responses.calculation_response import (
     GetCalculationDetailResponse,
@@ -393,14 +396,18 @@ class CalculationUseCase(ICalculationUseCase):
 
             model_map[i.model_id].months.append(
                 GetCalculationDetailResponse(
+                    calculation_slot_id=i.slot_calculation_id,
                     month=i.forecast_month,
                     take_off=0 if i.take_off is None else i.take_off,
                     bo=0 if i.bo is None else i.bo,
                     soa=0 if i.soa is None else i.soa,
                     oc=0 if i.oc is None else i.oc,
+                    so=0 if i.so is None else i.so,
                     booking_prospect=(
                         0 if i.booking_prospect is None else i.booking_prospect
                     ),
+                    slot_1=i.slot_1,
+                    slot_2=i.slot_2,
                 )
             )
 
@@ -409,4 +416,29 @@ class CalculationUseCase(ICalculationUseCase):
         for k, v in model_map.items():
             models.append(v)
 
+        models = sorted(models, key=lambda x: (x.category.text, x.model_id))
+
         return GetCalculationResponse(models=models)
+
+    def update_calculation_detail(
+        self, request: Request, update_calculation_request: UpdateCalculationRequest
+    ):
+        begin_transaction(request, Database.VEHICLE_ALLOCATION)
+
+        calculation_detail = self.calculation_repo.find_calculation_detail(
+            request,
+            update_calculation_request.slot_calculation_id,
+            update_calculation_request.model_id,
+            update_calculation_request.forecast_month,
+        )
+
+        if calculation_detail is None:
+            raise HTTPException(
+                status_code=http.HTTPStatus.NOT_FOUND,
+                detail="Calculation detail not found",
+            )
+
+        calculation_detail.slot_1 = update_calculation_request.slot_1
+        calculation_detail.slot_2 = update_calculation_request.slot_2
+
+        commit(request, Database.VEHICLE_ALLOCATION)

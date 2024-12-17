@@ -26,16 +26,14 @@ def bearer_auth(
             status_code=http.HTTPStatus.UNAUTHORIZED, detail="Unauthorized"
         )
 
-    repo = UserRepository()
     begin_transaction(request, Database.VEHICLE_ALLOCATION)
-    repo.upsert_user(request, user)
+    user_repo.upsert_user(request, user)
     commit(request, Database.VEHICLE_ALLOCATION)
     request.state.access_token = auth.credentials.removeprefix("Bearer ")
     request.state.user = user
 
 
 def api_key_auth(request: Request, api_key_header: str = Security(api_key_header)):
-    print(get_config().app.api_keys)
     if api_key_header not in get_config().app.api_keys:
         raise HTTPException(
             status_code=http.HTTPStatus.UNAUTHORIZED, detail="Unauthorized"

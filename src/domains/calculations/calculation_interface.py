@@ -2,8 +2,14 @@ import abc
 
 from fastapi import Request, UploadFile
 
+from src.domains.calculations.entities.va_slot_calculation_details import (
+    SlotCalculationDetail,
+)
 from src.domains.calculations.entities.va_slot_calculations import SlotCalculation
-from src.models.requests.calculation_request import GetCalculationRequest
+from src.models.requests.calculation_request import (
+    GetCalculationRequest,
+    UpdateCalculationRequest,
+)
 from src.models.responses.basic_response import NoDataResponse
 from src.models.responses.calculation_response import GetCalculationResponse
 
@@ -27,6 +33,12 @@ class ICalculationUseCase:
     ) -> GetCalculationResponse:
         pass
 
+    @abc.abstractmethod
+    def update_calculation_detail(
+        self, request: Request, update_calculation_request: UpdateCalculationRequest
+    ):
+        pass
+
 
 class ICalculationRepository:
 
@@ -46,4 +58,14 @@ class ICalculationRepository:
     def create_calculation_detail(
         self, request: Request, calculation_detail: SlotCalculation
     ) -> None:
+        pass
+
+    @abc.abstractmethod
+    def find_calculation_detail(
+        self,
+        request: Request,
+        slot_calculation_id: str = None,
+        model_id: str = None,
+        forecast_month: int = None,
+    ) -> SlotCalculationDetail | None:
         pass

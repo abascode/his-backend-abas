@@ -34,19 +34,19 @@ router = APIRouter(prefix="/api/allocations", tags=["Allocation"])
 
 @router.post(
     "/approve",
-    response_model=NoDataResponse,
+    response_model=BasicResponse[dict],
     summary="Approve Allocation",
     description="Approve Allocation",
-    # dependencies=[Depends(bearer_auth)],
+    dependencies=[Depends(bearer_auth)],
 )
 def approve_allocation(
     request: Request,
     approval_request: ApprovalAllocationRequest,
     uc: IAllocationUseCase = Depends(AllocationUseCase),
-) -> NoDataResponse:
-    uc.approve_allocation(request, approval_request)
+) -> BasicResponse[dict]:
+    res = uc.approve_allocation(request, approval_request)
 
-    return NoDataResponse(message="Success approving allocation data")
+    return BasicResponse(data=res, message="Success approving allocation data")
 
 
 @router.post(

@@ -457,7 +457,9 @@ class AllocationUseCase(IAllocationUseCase):
 
     def approve_allocation(
         self, request: Request, approval_request: ApprovalAllocationRequest
-    ) -> None:
+    ) -> dict:
+
+        begin_transaction(request, Database.VEHICLE_ALLOCATION)
         forecast = self.forecast_repo.find_forecast(
             request, month=approval_request.month, year=approval_request.year
         )
@@ -467,46 +469,54 @@ class AllocationUseCase(IAllocationUseCase):
                 status_code=http.HTTPStatus.NOT_FOUND, detail="Forecast is not found"
             )
 
-        # approvals = self.allocation_repo.get_allocation_approvals(
-        #     request, approval_request.month, approval_request.year
-        # )
-        #
-        # if len(approvals) == 0:
-        #     raise HTTPException(
-        #         status_code=http.HTTPStatus.BAD_REQUEST,
-        #         detail="Allocation is not submitted",
-        #     )
-        #
-        # unapproved_approvals = [i for i in approvals if i.approved_at is None]
-        #
-        # if len(unapproved_approvals) > 0:
-        #     if unapproved_approvals[0].role_id != request.state.user.role_id:
-        #         raise HTTPException(
-        #             status_code=http.HTTPStatus.FORBIDDEN,
-        #             detail="You are not authorized to approve this allocation",
-        #         )
-        #     else:
-        #         unapproved_approvals[0].approved_at = datetime.now()
-        #         unapproved_approvals[0].approver_id = request.state.user.username
-        #         unapproved_approvals[0].approval_flag = (
-        #             AllocationApprovalFlagEnum.APPROVED
-        #         )
-        #
-        # unapproved_approvals = [i for i in approvals if i.approved_at is None]
-        #
-        # if len(unapproved_approvals) == 0:
-        payload = {"data": []}
+        approvals = self.allocation_repo.get_allocation_approvals(
+            request, approval_request.month, approval_request.year
+        )
 
-        for i in forecast.details:
-            if i.deletable == 0:
-                temp = {
-                    "RECORD_ID": i.id,
-                    "DEALER_FORECAST_ID": forecast.id,
-                    "MODEL_VARIANT": i.model_id,
-                }
-                for j in i.months:
-                    if j.deletable == 0:
-                        temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = j.hmsi_allocation
-                payload["data"].append(temp)
+        if len(approvals) == 0:
+            raise HTTPException(
+                status_code=http.HTTPStatus.BAD_REQUEST,
+                detail="Allocation is not submitted",
+            )
 
-        self.allocation_repo.approve_allocation_data(request, payload)
+        unapproved_approvals = [i for i in approvals if i.approved_at is None]
+
+        if len(unapproved_approvals) > 0:
+            if unapproved_approvals[0].role_id != request.state.user.role_id:
+                raise HTTPException(
+                    status_code=http.HTTPStatus.FORBIDDEN,
+                    detail="You are not authorized to approve this allocation",
+                )
+            else:
+                unapproved_approvals[0].approved_at = datetime.now()
+                unapproved_approvals[0].approver_id = request.state.user.username
+                unapproved_approvals[0].approval_flag = (
+                    AllocationApprovalFlagEnum.APPROVED
+                )
+
+        unapproved_approvals = [i for i in approvals if i.approved_at is None]
+
+        if len(unapproved_approvals) == 0:
+            payload = {"data": []}
+
+            for i in forecast.details:
+                if i.deletable == 0:
+                    temp = {
+                        "RECORD_ID": i.id,
+                        "DEALER_FORECAST_ID": forecast.id,
+                        "MODEL_VARIANT": i.model_id,
+                    }
+                    for j in i.months:
+                        if j.deletable == 0:
+                            temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = (
+                                j.hmsi_allocation
+                            )
+                    payload["data"].append(temp)
+
+            data = self.allocation_repo.approve_allocation_data(request, payload)
+            return {
+                "payload": payload,
+                "response": data,
+            }
+
+        commit(request, Database.VEHICLE_ALLOCATION)

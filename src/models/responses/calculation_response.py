@@ -11,12 +11,16 @@ class GetCalculationStockPilotResponse(BaseModel):
 
 
 class GetCalculationDetailResponse(BaseModel):
+    calculation_slot_id: str
     month: int
     take_off: int
     bo: int
     soa: int
+    so: int
     oc: int
     booking_prospect: int
+    slot_1: int | None
+    slot_2: int | None
 
 
 class GetCalculationDetailMonthsResponse(BaseModel):

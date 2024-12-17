@@ -40,7 +40,7 @@ class IAllocationUseCase:
     @abc.abstractmethod
     def approve_allocation(
         self, request: Request, approval_request: ApprovalAllocationRequest
-    ):
+    ) -> dict:
         pass
 
 
@@ -102,5 +102,5 @@ class IAllocationRepository:
         self,
         request: Request,
         payload: dict,
-    ):
+    ) -> dict:
         pass

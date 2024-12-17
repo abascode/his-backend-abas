@@ -42,7 +42,8 @@ class SlotCalculationDetail(BaseModel):
     booking_prospect: MappedColumn[int] = mapped_column(
         Integer, nullable=True, server_default=text("0")
     )
-
+    slot_1: MappedColumn[int] = mapped_column(Integer, nullable=True)
+    slot_2: MappedColumn[int] = mapped_column(Integer, nullable=True)
     created_by: MappedColumn[str] = mapped_column(
         String(255),
         nullable=True,
