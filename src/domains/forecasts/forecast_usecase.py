@@ -373,7 +373,7 @@ class ForecastUseCase(IForecastUseCase):
                 status_code=http.HTTPStatus.NOT_FOUND, detail="Forecast is not found"
             )
 
-        payload = {"DATA": []}
+        payload = {"data": []}
 
         for i in forecast.details:
             if i.deletable == 0:
@@ -385,7 +385,7 @@ class ForecastUseCase(IForecastUseCase):
                 for j in i.months:
                     if j.deletable == 0:
                         temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = j.hmsi_allocation
-                payload["DATA"].append(temp)
+                payload["data"].append(temp)
 
         self.forecast_repo.approve_allocation_data(
             request, payload, approval_request.month, approval_request.year

@@ -208,7 +208,7 @@ class ForecastRepository(IForecastRepository):
 
         response = requests.post(
             url,
-            data=payload,
+            json=payload,
             auth=(
                 config.outbound["hoyu"].username,
                 config.outbound["hoyu"].password,
@@ -217,6 +217,6 @@ class ForecastRepository(IForecastRepository):
 
         if response.status_code != 200:
             raise HTTPException(
-                status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail="Outbound Error: " + url + " " + json.dumps(payload),
+                status_code=response.status_code,
+                detail="Outbound Error: " + url + " " + response.text,
             )
