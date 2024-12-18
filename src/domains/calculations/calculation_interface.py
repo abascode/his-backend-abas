@@ -39,6 +39,18 @@ class ICalculationUseCase:
     ):
         pass
 
+    @abc.abstractmethod
+    def download_booking_excel_template(
+        self, request: Request, month: int, year: int
+    ) -> str:
+        pass
+
+    @abc.abstractmethod
+    def download_monthly_target_excel_template(
+        self, request: Request, month: int, year: int
+    ) -> str:
+        pass
+
 
 class ICalculationRepository:
 

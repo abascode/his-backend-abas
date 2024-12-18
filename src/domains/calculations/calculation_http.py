@@ -3,6 +3,7 @@ import math
 
 from fastapi import APIRouter, Depends, Form, UploadFile, HTTPException
 from starlette.requests import Request
+from starlette.responses import FileResponse
 
 from src.dependencies.auth_dependency import bearer_auth
 from src.domains.calculations.calculation_interface import ICalculationUseCase
@@ -29,6 +30,44 @@ from src.models.responses.forecast_response import GetForecastSummaryResponse
 from src.shared.utils.storage_utils import save_file
 
 router = APIRouter(prefix="/api/calculations", tags=["Calculations"])
+
+
+@router.get(
+    "/template/booking",
+    summary="Download booking template",
+    description="Download booking template",
+)
+def download_booking_template(
+    request: Request,
+    month: int,
+    year: int,
+    calculation_uc: ICalculationUseCase = Depends(CalculationUseCase),
+) -> FileResponse:
+    path = calculation_uc.download_booking_excel_template(request, month, year)
+    return FileResponse(
+        path,
+        media_type="application/octet-stream",
+        filename="{}-{}-calculation-booking-template.xlsx".format(month, year),
+    )
+
+
+@router.get(
+    "/template/monthly-target",
+    summary="Download monthly target template",
+    description="Download monthly target template",
+)
+def download_monthly_target_template(
+    request: Request,
+    month: int,
+    year: int,
+    calculation_uc: ICalculationUseCase = Depends(CalculationUseCase),
+) -> FileResponse:
+    path = calculation_uc.download_monthly_target_excel_template(request, month, year)
+    return FileResponse(
+        path,
+        media_type="application/octet-stream",
+        filename="{}-{}-calculation-monthly-target-template.xlsx".format(month, year),
+    )
 
 
 @router.post(
@@ -100,7 +139,7 @@ def get_calculation_detail(
     description="Update Calculation",
     # dependencies=[Depends(bearer_auth)],
 )
-def approve_allocation(
+def update_calculation(
     request: Request,
     update_calculation_request: UpdateCalculationRequest,
     uc: ICalculationUseCase = Depends(CalculationUseCase),

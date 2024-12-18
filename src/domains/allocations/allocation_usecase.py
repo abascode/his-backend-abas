@@ -514,6 +514,7 @@ class AllocationUseCase(IAllocationUseCase):
                     payload["data"].append(temp)
 
             data = self.allocation_repo.approve_allocation_data(request, payload)
+
             return {
                 "payload": payload,
                 "response": data,

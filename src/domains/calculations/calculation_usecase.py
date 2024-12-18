@@ -1,4 +1,5 @@
 import re
+import uuid
 from typing import List, Dict
 
 import pandas
@@ -6,6 +7,9 @@ from fastapi import Depends, HTTPException, Request, UploadFile
 import os
 import http
 import openpyxl
+from openpyxl.styles import Border, Side, Alignment
+from openpyxl.workbook import Workbook
+
 from src.domains.calculations.calculation_interface import (
     ICalculationRepository,
     ICalculationUseCase,
@@ -47,7 +51,7 @@ from src.shared.utils.file_utils import (
     get_file_extension,
     save_upload_file,
 )
-from src.shared.utils.storage_utils import is_file_exist
+from src.shared.utils.storage_utils import is_file_exist, get_full_path
 from src.shared.utils.xid import generate_xid
 from pathlib import Path
 
@@ -442,3 +446,97 @@ class CalculationUseCase(ICalculationUseCase):
         calculation_detail.slot_2 = update_calculation_request.slot_2
 
         commit(request, Database.VEHICLE_ALLOCATION)
+
+    def download_booking_excel_template(
+        self, request: Request, month: int, year: int
+    ) -> str:
+        workbook = Workbook()
+
+        sheet = workbook.active
+        sheet.title = "Template-Rundown"
+
+        headers = [
+            "SO Number",
+            "Status SO",
+            "Status Pilot",
+            "Dealer",
+            "Model",
+            "Cat",
+            "Region",
+            "Customer Name",
+            "Vin Year Rev",
+            "SRC",
+            "Source",
+            "Year",
+            "VRF QTY",
+        ]
+
+        for i in range(5):
+            month += 1
+            if month > 12:
+                month = 1
+                year += 1
+            headers.append(f"{year}-{month:02}")
+
+        for col_index, header in enumerate(headers, start=1):
+            cell = sheet.cell(row=1, column=col_index, value=header)
+            thin_border = Border(
+                left=Side(style="thin"),
+                right=Side(style="thin"),
+                top=Side(style="thin"),
+                bottom=Side(style="thin"),
+            )
+            cell.border = thin_border
+            cell.alignment = Alignment(horizontal="center")
+            sheet.column_dimensions[cell.column_letter].width = len(header) + 2
+
+        relative_path = (
+            "/temp/template/calculations/booking-" + str(uuid.uuid4()) + ".xlsx"
+        )
+        dest = get_full_path(relative_path)
+        upload_dir = os.path.join(os.getcwd(), "storage/temp/template/calculations")
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+
+        workbook.save(dest)
+        return dest
+
+    def download_monthly_target_excel_template(
+        self, request: Request, month: int, year: int
+    ) -> str:
+        workbook = Workbook()
+
+        sheet = workbook.active
+        sheet.title = "Template-Rundown"
+
+        headers = ["Dealer name", "Category"]
+
+        for i in range(12):
+            month += 1
+            if month > 12:
+                month = 1
+                year += 1
+            headers.append(f"{year}-{month:02}")
+
+        for col_index, header in enumerate(headers, start=1):
+            cell = sheet.cell(row=1, column=col_index, value=header)
+            thin_border = Border(
+                left=Side(style="thin"),
+                right=Side(style="thin"),
+                top=Side(style="thin"),
+                bottom=Side(style="thin"),
+            )
+            cell.border = thin_border
+            cell.alignment = Alignment(horizontal="center")
+            sheet.column_dimensions[cell.column_letter].width = len(header) + 2
+
+        relative_path = (
+            "/temp/template/calculations/monthly-target-" + str(uuid.uuid4()) + ".xlsx"
+        )
+        dest = get_full_path(relative_path)
+        upload_dir = os.path.join(os.getcwd(), "storage/temp/template/calculations")
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+
+        workbook.save(dest)
+        return dest
