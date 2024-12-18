@@ -541,10 +541,11 @@ class AllocationUseCase(IAllocationUseCase):
         headers = ["Dealer name", "Category"]
 
         for i in range(12):
-            month += 1
-            if month > 12:
-                month = 1
-                year += 1
+            if i > 0:
+                month += 1
+                if month > 12:
+                    month = 1
+                    year += 1
             headers.append(f"{year}-{month:02}")
 
         for col_index, header in enumerate(headers, start=1):
