@@ -2,6 +2,7 @@ import math
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from starlette.requests import Request
+from starlette.responses import FileResponse
 
 from src.dependencies.auth_dependency import api_key_auth, bearer_auth
 from src.domains.allocations.allocation_interface import IAllocationUseCase
@@ -85,3 +86,22 @@ def submit_allocation(
 ) -> NoDataResponse:
     allocation_uc.submit_allocation(request, submit_allocation_request)
     return NoDataResponse(message="Success submitting allocation")
+
+
+@router.get(
+    "/template/monthly-target",
+    summary="Download monthly target template",
+    description="Download monthly target template",
+)
+def download_monthly_target_template(
+    request: Request,
+    month: int,
+    year: int,
+    allocation_uc: IAllocationUseCase = Depends(AllocationUseCase),
+) -> FileResponse:
+    path = allocation_uc.download_monthly_target_excel_template(request, month, year)
+    return FileResponse(
+        path,
+        media_type="application/octet-stream",
+        filename="{}-{}-allocation-monthly-target-template.xlsx".format(month, year),
+    )

@@ -52,21 +52,21 @@ def download_booking_template(
 
 
 @router.get(
-    "/template/monthly-target",
-    summary="Download monthly target template",
-    description="Download monthly target template",
+    "/template/take-off",
+    summary="Download calculation take off template",
+    description="Download calculation take off template",
 )
-def download_monthly_target_template(
+def download_takeoff_template(
     request: Request,
     month: int,
     year: int,
     calculation_uc: ICalculationUseCase = Depends(CalculationUseCase),
 ) -> FileResponse:
-    path = calculation_uc.download_monthly_target_excel_template(request, month, year)
+    path = calculation_uc.download_takeoff_excel_template(request, month, year)
     return FileResponse(
         path,
         media_type="application/octet-stream",
-        filename="{}-{}-calculation-monthly-target-template.xlsx".format(month, year),
+        filename="{}-{}-calculation-take-off-template.xlsx".format(month, year),
     )
 
 

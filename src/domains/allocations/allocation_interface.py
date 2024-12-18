@@ -43,6 +43,12 @@ class IAllocationUseCase:
     ) -> dict:
         pass
 
+    @abc.abstractmethod
+    def download_monthly_target_excel_template(
+        self, request: Request, month: int, year: int
+    ) -> str:
+        pass
+
 
 class IAllocationRepository:
     @abc.abstractmethod

@@ -501,17 +501,25 @@ class CalculationUseCase(ICalculationUseCase):
         workbook.save(dest)
         return dest
 
-    def download_monthly_target_excel_template(
-        self, request: Request, month: int, year: int
-    ) -> str:
+    def download_takeoff_excel_template(self, request: Request, month: int, year: int):
         workbook = Workbook()
 
         sheet = workbook.active
         sheet.title = "Template-Rundown"
 
-        headers = ["Dealer name", "Category"]
+        headers = [
+            "Category",
+            "Sub Name",
+            "HMMI",
+            "HMSI",
+            "Class",
+            "Sales Name",
+            "Lot No",
+            "Suffix/KIT",
+            "Item name",
+        ]
 
-        for i in range(12):
+        for i in range(7):
             month += 1
             if month > 12:
                 month = 1
@@ -531,7 +539,7 @@ class CalculationUseCase(ICalculationUseCase):
             sheet.column_dimensions[cell.column_letter].width = len(header) + 2
 
         relative_path = (
-            "/temp/template/calculations/monthly-target-" + str(uuid.uuid4()) + ".xlsx"
+            "/temp/template/calculations/takeoff-" + str(uuid.uuid4()) + ".xlsx"
         )
         dest = get_full_path(relative_path)
         upload_dir = os.path.join(os.getcwd(), "storage/temp/template/calculations")

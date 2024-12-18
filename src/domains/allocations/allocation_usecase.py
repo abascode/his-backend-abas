@@ -1,11 +1,14 @@
 import http
 import os
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict
 
 import openpyxl
 from fastapi import Depends, HTTPException, UploadFile
+from openpyxl.styles import Border, Side, Alignment
+from openpyxl.workbook import Workbook
 from starlette.requests import Request
 from src.domains.allocations.allocation_interface import (
     IAllocationRepository,
@@ -50,11 +53,11 @@ from src.shared.utils.file_utils import (
     save_upload_file,
     get_file_extension,
 )
+from src.shared.utils.storage_utils import get_full_path
 from src.shared.utils.xid import generate_xid
 
 
 class AllocationUseCase(IAllocationUseCase):
-
     def __init__(
         self,
         allocation_repo: IAllocationRepository = Depends(AllocationRepository),
@@ -526,3 +529,43 @@ class AllocationUseCase(IAllocationUseCase):
         return {
             "message": "Success approving allocation",
         }
+
+    def download_monthly_target_excel_template(
+        self, request: Request, month: int, year: int
+    ) -> str:
+        workbook = Workbook()
+
+        sheet = workbook.active
+        sheet.title = "Template-Monthly target"
+
+        headers = ["Dealer name", "Category"]
+
+        for i in range(12):
+            month += 1
+            if month > 12:
+                month = 1
+                year += 1
+            headers.append(f"{year}-{month:02}")
+
+        for col_index, header in enumerate(headers, start=1):
+            cell = sheet.cell(row=1, column=col_index, value=header)
+            thin_border = Border(
+                left=Side(style="thin"),
+                right=Side(style="thin"),
+                top=Side(style="thin"),
+                bottom=Side(style="thin"),
+            )
+            cell.border = thin_border
+            cell.alignment = Alignment(horizontal="center")
+            sheet.column_dimensions[cell.column_letter].width = len(header) + 2
+
+        relative_path = (
+            "/temp/template/allocations/monthly-target-" + str(uuid.uuid4()) + ".xlsx"
+        )
+        dest = get_full_path(relative_path)
+        upload_dir = os.path.join(os.getcwd(), "storage/temp/template/allocations")
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+
+        workbook.save(dest)
+        return dest

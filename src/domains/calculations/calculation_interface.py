@@ -46,9 +46,7 @@ class ICalculationUseCase:
         pass
 
     @abc.abstractmethod
-    def download_monthly_target_excel_template(
-        self, request: Request, month: int, year: int
-    ) -> str:
+    def download_takeoff_excel_template(self, request: Request, month: int, year: int):
         pass
 
 
