@@ -460,11 +460,11 @@ class AllocationUseCase(IAllocationUseCase):
     ) -> dict:
 
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
-        forecast = self.forecast_repo.find_forecast(
+        forecasts = self.forecast_repo.get_forecast(
             request, month=approval_request.month, year=approval_request.year
         )
 
-        if forecast is None:
+        if len(forecasts) is None:
             raise HTTPException(
                 status_code=http.HTTPStatus.NOT_FOUND, detail="Forecast is not found"
             )
@@ -498,20 +498,20 @@ class AllocationUseCase(IAllocationUseCase):
 
         if len(unapproved_approvals) == 0:
             payload = {"data": []}
-
-            for i in forecast.details:
-                if i.deletable == 0:
-                    temp = {
-                        "RECORD_ID": i.id,
-                        "DEALER_FORECAST_ID": forecast.id,
-                        "MODEL_VARIANT": i.model_id,
-                    }
-                    for j in i.months:
-                        if j.deletable == 0:
-                            temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = (
-                                j.hmsi_allocation
-                            )
-                    payload["data"].append(temp)
+            for forecast in forecasts:
+                for i in forecast.details:
+                    if i.deletable == 0:
+                        temp = {
+                            "RECORD_ID": i.id,
+                            "DEALER_FORECAST_ID": forecast.id,
+                            "MODEL_VARIANT": i.model_id,
+                        }
+                        for j in i.months:
+                            if j.deletable == 0:
+                                temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = (
+                                    j.hmsi_allocation
+                                )
+                        payload["data"].append(temp)
 
             data = self.allocation_repo.approve_allocation_data(request, payload)
             commit(request, Database.VEHICLE_ALLOCATION)
