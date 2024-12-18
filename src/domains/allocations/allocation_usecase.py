@@ -514,6 +514,7 @@ class AllocationUseCase(IAllocationUseCase):
                     payload["data"].append(temp)
 
             data = self.allocation_repo.approve_allocation_data(request, payload)
+            commit(request, Database.VEHICLE_ALLOCATION)
 
             return {
                 "payload": payload,
@@ -521,3 +522,7 @@ class AllocationUseCase(IAllocationUseCase):
             }
 
         commit(request, Database.VEHICLE_ALLOCATION)
+
+        return {
+            "message": "Success approving allocation",
+        }
