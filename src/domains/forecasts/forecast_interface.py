@@ -24,6 +24,7 @@ from src.models.responses.forecast_response import (
     GetForecastSummaryResponse,
     GetForecastResponse,
     GetApprovalAllocationResponse,
+    ConfirmPdfResponse,
 )
 
 
@@ -49,7 +50,7 @@ class IForecastUseCase:
     @abc.abstractmethod
     def confirm_forecast(
         self, request: Request, confirm_request: ConfirmForecastRequest
-    ) -> str:
+    ) -> ConfirmPdfResponse:
         pass
 
     @abc.abstractmethod

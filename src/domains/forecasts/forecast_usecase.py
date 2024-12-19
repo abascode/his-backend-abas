@@ -52,6 +52,7 @@ from src.models.responses.forecast_response import (
     GetForecastResponse,
     GetForecastDetailResponse,
     GetForecastDetailMonthResponse,
+    ConfirmPdfResponse,
 )
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
@@ -252,9 +253,15 @@ class ForecastUseCase(IForecastUseCase):
 
     def confirm_forecast(
         self, request: Request, confirm_request: ConfirmForecastRequest
-    ) -> str:
+    ) -> ConfirmPdfResponse:
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
         forecast = self.forecast_repo.find_forecast(request, confirm_request.record_id)
+
+        res = ConfirmPdfResponse(
+            dealer_id=forecast.dealer_id,
+            month=forecast.month,
+            year=forecast.year,
+        )
 
         if forecast is None:
             raise HTTPException(
@@ -306,7 +313,7 @@ class ForecastUseCase(IForecastUseCase):
                             ]["ws_priv_conf"]
 
         commit(request, Database.VEHICLE_ALLOCATION)
-        return forecast.dealer_id
+        return res
 
     def archive_forecast(self, request: Request, forecast: Forecast):
         archive = ForecastArchive(

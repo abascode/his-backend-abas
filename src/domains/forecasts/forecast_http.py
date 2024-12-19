@@ -87,11 +87,11 @@ def confirm_forecast(
     confirm_request: ConfirmForecastRequest,
     forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
 ):
-    dealer_id = forecast_uc.confirm_forecast(request, confirm_request)
+    res = forecast_uc.confirm_forecast(request, confirm_request)
 
     return PdfResponse(
         message="Success confirming forecast",
-        document_link=f"/api/forecasts/pdf?month={confirm_request.month}&year={confirm_request.year}&dealer_id={dealer_id}",
+        document_link=f"/api/forecasts/pdf?month={res.month}&year={res.year}&dealer_id={res.dealer_id}",
     )
 
 

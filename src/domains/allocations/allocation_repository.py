@@ -147,19 +147,17 @@ class AllocationRepository(IAllocationRepository):
                                                 0,
                                             )
                                         )
-                                        * func.coalesce(
-                                            OrderConfiguration.forecast_percentage,
-                                            0,
-                                        )
-                                        / 100
                                     ),
                                     Float,
                                 )
-                                / cast(
-                                    func.coalesce(total_ws_alias.c.total_ws_sum, 0),
+                                * cast(
+                                    func.coalesce(
+                                        OrderConfiguration.forecast_percentage,
+                                        0,
+                                    )
+                                    / 100,
                                     Float,
-                                )
-                                * 100,
+                                ),
                                 Integer,
                             ),
                         ),

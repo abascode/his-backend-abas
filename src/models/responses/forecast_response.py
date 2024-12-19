@@ -36,6 +36,7 @@ class GetForecastResponse(BaseModel):
     dealer: TextValueResponse
     models: List[GetForecastDetailResponse]
 
+
 class GetApprovalAllocationSuccessResponse(BaseModel):
     primary_id: str
     status: str
@@ -51,3 +52,9 @@ class GetApprovalAllocationErrorResponse(BaseModel):
 class GetApprovalAllocationResponse(BaseModel):
     success_data: List[GetApprovalAllocationSuccessResponse]
     error_data: List[GetApprovalAllocationErrorResponse]
+
+
+class ConfirmPdfResponse(BaseModel):
+    dealer_id: str
+    month: int
+    year: int
