@@ -1,6 +1,7 @@
+import http
 import math
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException
 from starlette.requests import Request
 from starlette.responses import FileResponse
 
@@ -29,6 +30,7 @@ from src.models.responses.basic_response import (
     ListResponse,
     NoDataResponse,
 )
+from src.shared.utils.storage_utils import save_file
 
 router = APIRouter(prefix="/api/allocations", tags=["Allocation"])
 
@@ -62,7 +64,16 @@ def upsert_monthly_target(
     year: int = Form(...),
     allocation_uc: IAllocationUseCase = Depends(AllocationUseCase),
 ) -> NoDataResponse:
-    allocation_uc.upsert_monthly_target(request, file, month, year)
+    if (
+        file.content_type
+        != "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ):
+        raise HTTPException(
+            status_code=http.HTTPStatus.BAD_REQUEST,
+            detail="Please upload excel file",
+        )
+    path = save_file("allocations", file)
+    allocation_uc.upsert_monthly_target(request, path, month, year)
 
     return NoDataResponse(message="Success Upserting Monthly Target")
 

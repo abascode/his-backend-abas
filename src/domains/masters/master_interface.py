@@ -69,7 +69,9 @@ class IMasterRepository:
         pass
 
     @abc.abstractmethod
-    def find_dealer_by_name(self, request: Request, name: str) -> Dealer | None:
+    def find_dealer(
+        self, request: Request, name: str = None, dealer_id: str = None
+    ) -> Dealer | None:
         pass
 
     @abc.abstractmethod

@@ -27,7 +27,7 @@ class IAllocationUseCase:
 
     @abc.abstractmethod
     def upsert_monthly_target(
-        self, request: Request, file: UploadFile, month: int, year: int
+        self, request: Request, file: str, month: int, year: int
     ) -> None:
         pass
 
@@ -109,4 +109,15 @@ class IAllocationRepository:
         request: Request,
         payload: dict,
     ) -> dict:
+        pass
+
+    @abc.abstractmethod
+    def delete_monthly_target_detail(
+        self,
+        request: Request,
+        month_target_id: str,
+        forecast_month: int,
+        dealer_id: str,
+        category_id: str,
+    ):
         pass

@@ -51,8 +51,17 @@ class MasterRepository(IMasterRepository):
             temp.name = dealer.name
         return dealer
 
-    def find_dealer_by_name(self, request: Request, name: str) -> Dealer | None:
-        return self.get_va_db(request).query(Dealer).filter(Dealer.name == name).first()
+    def find_dealer(
+        self, request: Request, name: str = None, dealer_id: str = None
+    ) -> Dealer | None:
+        query = self.get_va_db(request).query(Dealer)
+
+        if name is not None:
+            query = query.filter(Dealer.name == name)
+        if dealer_id is not None:
+            query = query.filter(Dealer.id == dealer_id)
+
+        return query.first()
 
     def get_dealer_options(self, request: Request, search: str) -> List[Dealer]:
         dealer = (

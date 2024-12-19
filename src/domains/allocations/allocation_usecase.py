@@ -1,11 +1,13 @@
 import http
 import os
+import re
 import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict
 
 import openpyxl
+import pandas
 from fastapi import Depends, HTTPException, UploadFile
 from openpyxl.styles import Border, Side, Alignment
 from openpyxl.workbook import Workbook
@@ -24,6 +26,8 @@ from src.domains.forecasts.entities.va_monthly_target_details import MonthlyTarg
 from src.domains.forecasts.entities.va_monthly_targets import MonthlyTarget
 from src.domains.forecasts.forecast_interface import IForecastRepository
 from src.domains.forecasts.forecast_repository import ForecastRepository
+from src.domains.masters.entities.va_categories import Category
+from src.domains.masters.entities.va_dealers import Dealer
 from src.domains.masters.master_interface import IMasterRepository
 from src.domains.masters.master_repository import MasterRepository
 from src.domains.users.enums import RoleDict
@@ -53,7 +57,7 @@ from src.shared.utils.file_utils import (
     save_upload_file,
     get_file_extension,
 )
-from src.shared.utils.storage_utils import get_full_path
+from src.shared.utils.storage_utils import get_full_path, is_file_exist
 from src.shared.utils.xid import generate_xid
 
 
@@ -256,110 +260,64 @@ class AllocationUseCase(IAllocationUseCase):
             approvals=approvals, adjustments=adjustments, targets=targets
         )
 
-    def upsert_monthly_target(self, request, file: UploadFile, month: int, year: int):
-        begin_transaction(request, Database.VEHICLE_ALLOCATION)
-
-        monthly_target = self.allocation_repo.find_monthly_target(
-            request, month=month, year=year
-        )
-
-        is_create = monthly_target is None
-
-        if is_create:
-            monthly_target = MonthlyTarget()
-            monthly_target.month = month
-            monthly_target.year = year
-
-            monthly_target = self.allocation_repo.create_monthly_target(
-                request, monthly_target
-            )
-
-        temp_storage_path = f"{os.getcwd()}/src/temp"
-        file_extension = get_file_extension(file)
-        unique_filename = f"{generate_xid()}.{file_extension}"
-
-        file_path = Path(temp_storage_path) / unique_filename
-
-        save_upload_file(file, file_path)
-
-        workbook = openpyxl.load_workbook(file_path)
-        worksheet = workbook.active
-
-        HEADER_ROW_LOCATION = 1
-        DEALER_PREFIX_COLUMN_NAME = "Dealer Name"
-        CATEGORY_COLUMN_NAME = "Category"
-
-        dealer_prefix_column_index = get_header_column_index(
-            worksheet=worksheet,
-            header_name=DEALER_PREFIX_COLUMN_NAME,
-            header_row_index=HEADER_ROW_LOCATION,
-        )
-
-        if dealer_prefix_column_index is None:
+    def upsert_monthly_target(self, request, file: str, month: int, year: int):
+        if not is_file_exist(file):
             raise HTTPException(
-                status_code=http.HTTPStatus.BAD_REQUEST,
-                detail=f"Dealer prefix column not found in {DEALER_PREFIX_COLUMN_NAME}",
+                status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Excel file is not found",
             )
 
-        category_column_index = get_header_column_index(
-            worksheet=worksheet,
-            header_name=CATEGORY_COLUMN_NAME,
-            header_row_index=HEADER_ROW_LOCATION,
-        )
-
-        if category_column_index is None:
-            raise HTTPException(
-                status_code=http.HTTPStatus.BAD_REQUEST,
-                detail=f"Monthly target category column not found in {CATEGORY_COLUMN_NAME}",
-            )
-
-        new_monthly_target_details: List[MonthlyTargetDetail] = []
-
-        forecast_month_headers = [
-            (cell.column, cell.value)
-            for cell in worksheet[HEADER_ROW_LOCATION]
-            if is_date_string_format(cell.value, "%Y-%m")
+        df = pandas.read_excel(os.getcwd() + "/storage" + file)
+        columns = [
+            "Dealer Name",
+            "Category",
         ]
 
-        category_map = {}
+        not_found_index = [i for i in columns if i not in df.columns.tolist()]
+        forecast_months = [
+            i for i in df.columns.tolist() if re.match(r"^\d{4}-(0[1-9]|1[0-2])$", i)
+        ]
 
-        for row in worksheet.iter_rows(
-            min_row=HEADER_ROW_LOCATION + 1, max_row=worksheet.max_row
-        ):
-            dealer_prefix = row[dealer_prefix_column_index - 1].value
+        if len(not_found_index) > 0:
+            raise HTTPException(
+                http.HTTPStatus.BAD_REQUEST,
+                detail=f"{not_found_index[0]} field is required.",
+            )
 
-            dealer = self.master_repo.find_dealer_by_name(request, dealer_prefix)
+        begin_transaction(request, Database.VEHICLE_ALLOCATION)
 
-            if dealer is None:
-                raise HTTPException(
-                    status_code=http.HTTPStatus.NOT_FOUND,
-                    detail=f"Dealer {dealer_prefix} is not found",
-                )
+        dealer_dict: Dict[str, Dealer] = {}
+        category_dict: Dict[str, Category] = {}
+        monthly_target_details: List[MonthlyTargetDetail] = []
+        monthly_target_map = {}
 
-            category_number = row[category_column_index - 1].value
+        for idx, row in df.iterrows():
+            dealer_id = row["Dealer Name"]
+            category_id = row["Category"]
 
-            if category_number not in category_map:
-                temp = self.master_repo.find_category(request, category_number)
-                category_map[category_number] = temp
-
-                if temp is None:
+            if dealer_id not in dealer_dict:
+                dealer = self.master_repo.find_dealer(request, dealer_id=dealer_id)
+                if dealer is None:
                     raise HTTPException(
-                        status_code=http.HTTPStatus.NOT_FOUND,
-                        detail=f"Category {category_number} is not found",
+                        status_code=http.HTTPStatus.BAD_REQUEST,
+                        detail=f"Dealer {dealer_id} is not found",
                     )
+                dealer_dict[dealer_id] = dealer
 
-            category = category_map[category_number]
+            if category_id not in category_dict:
+                category = self.master_repo.find_category(request, category_id)
+                if category is None:
+                    raise HTTPException(
+                        status_code=http.HTTPStatus.BAD_REQUEST,
+                        detail=f"Category {category_id} is not found",
+                    )
+                category_dict[category_id] = category
 
-            if category is None:
-                raise HTTPException(
-                    status_code=http.HTTPStatus.NOT_FOUND,
-                    detail=f"Category {category.id} is not found",
-                )
+            dealer = dealer_dict[dealer_id]
+            category = category_dict[category_id]
 
-            for column_index, header_name in forecast_month_headers:
-                target_value = row[column_index - 1].value
-
-                forecast_month = get_month_difference(f"{year}-{month}", header_name)
+            for j in forecast_months:
+                forecast_month = get_month_difference(f"{year}-{month}", j)
 
                 if forecast_month < 0:
                     raise HTTPException(
@@ -367,41 +325,44 @@ class AllocationUseCase(IAllocationUseCase):
                         detail=f"Forecast month cannot be less than the current month",
                     )
 
-                monthly_target_detail = MonthlyTargetDetail(
-                    month_target_id=monthly_target.id,
+                monthly_target = MonthlyTargetDetail(
                     forecast_month=forecast_month,
                     dealer_id=dealer.id,
-                    target=target_value,
+                    target=row[j] if not pandas.isna(row[j]) else 0,
                     category_id=category.id,
                 )
 
-                new_monthly_target_details.append(monthly_target_detail)
-
-        if is_create:
-            for monthly_target_detail in new_monthly_target_details:
-                self.allocation_repo.create_monthly_target_detail(
-                    request, monthly_target_detail
+                monthly_target_details.append(monthly_target)
+                monthly_target_map[(dealer_id, category_id, forecast_month)] = (
+                    monthly_target
                 )
+
+        monthly_target = self.allocation_repo.find_monthly_target(
+            request, month=month, year=year
+        )
+
+        if monthly_target is None:
+            monthly_target = MonthlyTarget(
+                month=month, year=year, details=monthly_target_details
+            )
+            self.allocation_repo.create_monthly_target(request, monthly_target)
         else:
-            current_details = monthly_target.details
+            detail_maps = {}
 
-            for i in range(len(new_monthly_target_details)):
-                current_details[i].target = new_monthly_target_details[i].target
-                current_details[i].category_id = new_monthly_target_details[
-                    i
-                ].category_id
-                current_details[i].forecast_month = new_monthly_target_details[
-                    i
-                ].forecast_month
-                current_details[i].dealer_id = new_monthly_target_details[i].dealer_id
+            for i in monthly_target.details:
+                if i.deletable == 0:
+                    detail_maps[(i.dealer_id, i.category_id, i.forecast_month)] = i
 
-                self.allocation_repo.create_monthly_target_detail(
-                    request, current_details[i]
-                )
+            for k, v in monthly_target_map.items():
+                dealer_id, category_id, forecast_month = k
+                if (dealer_id, category_id, forecast_month) not in detail_maps:
+                    v.month_target_id = monthly_target.id
+                    self.allocation_repo.create_monthly_target_detail(request, v)
+                else:
+                    detail = detail_maps[(dealer_id, category_id, forecast_month)]
+                    detail.target = v.target
 
         commit(request, Database.VEHICLE_ALLOCATION)
-
-        clear_directory(Path(temp_storage_path))
 
     def submit_allocation(
         self, request: Request, submit_allocation_request: SubmitAllocationRequest
