@@ -158,6 +158,13 @@ class AllocationRepository(IAllocationRepository):
                                     )
                                     / 100,
                                     Float,
+                                )
+                                * (
+                                    cast(
+                                        func.coalesce(total_ws_alias.c.total_ws_sum, 0),
+                                        Float,
+                                    )
+                                    * 100
                                 ),
                                 Integer,
                             ),
