@@ -15,6 +15,7 @@ class UpdateAllocationAdjustmentRequest(BaseModel):
 class SubmitAllocationAdjustmentRequest(BaseModel):
     forecast_detail_month_id: str
     adjustment: int
+    hmsi_allocation: int
 
 
 class SubmitAllocationRequest(BaseModel):

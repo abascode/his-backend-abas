@@ -394,6 +394,7 @@ class AllocationUseCase(IAllocationUseCase):
                         if k.deletable == 0:
                             if k.id in adjustment_map:
                                 k.adjustment = adjustment_map[k.id].adjustment
+                                k.hmsi_allocation = adjustment_map[k.id].hmsi_allocation
 
         if submit_allocation_request.status == AllocationSubmissionStatusEnum.SUBMIT:
             approvals = self.allocation_repo.get_allocation_approvals(
