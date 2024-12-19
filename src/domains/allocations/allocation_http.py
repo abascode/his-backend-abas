@@ -60,9 +60,9 @@ def upsert_monthly_target(
     file: UploadFile = File(...),
     month: int = Form(...),
     year: int = Form(...),
-    forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
+    allocation_uc: IAllocationUseCase = Depends(AllocationUseCase),
 ) -> NoDataResponse:
-    forecast_uc.upsert_monthly_target(request, file, month, year)
+    allocation_uc.upsert_monthly_target(request, file, month, year)
 
     return NoDataResponse(message="Success Upserting Monthly Target")
 
