@@ -52,7 +52,6 @@ from src.models.responses.forecast_response import (
     GetForecastResponse,
     GetForecastDetailResponse,
     GetForecastDetailMonthResponse,
-    GetpdfResponse,
 )
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
