@@ -49,7 +49,7 @@ class IForecastUseCase:
     @abc.abstractmethod
     def confirm_forecast(
         self, request: Request, confirm_request: ConfirmForecastRequest
-    ):
+    ) -> str:
         pass
 
     @abc.abstractmethod
