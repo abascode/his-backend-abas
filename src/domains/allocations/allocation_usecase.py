@@ -449,7 +449,7 @@ class AllocationUseCase(IAllocationUseCase):
         unapproved_approvals = [i for i in approvals if i.approved_at is None]
 
         if len(unapproved_approvals) > 0:
-            if unapproved_approvals[0].role_id != request.state.user.role_id:
+            if unapproved_approvals[0].role_id not in request.state.user.role_id:
                 raise HTTPException(
                     status_code=http.HTTPStatus.FORBIDDEN,
                     detail="You are not authorized to approve this allocation",

@@ -22,7 +22,7 @@ class IamUserDto(BaseModel):
     username: str
     email: str
     last_login_at: str
-    role_id: int
+    role_id: List[int]
     division_id: str | None
     department_id: str | None
     role_name: List[str]

@@ -71,7 +71,7 @@ class UserRepository(IUserRepository):
                 username=data["username"],
                 email=data["email"],
                 last_login_at=data["last_login_at"],
-                role_id=intersect_role_id[0],
+                role_id=intersect_role_id,
                 division_id=data["division_id"],
                 department_id=data["department_id"],
                 role_name=data["role_name"],
@@ -94,7 +94,6 @@ class UserRepository(IUserRepository):
         if user is None:
             user = User(
                 id=user_dto.username,
-                role_id=user_dto.role_id,
                 name=user_dto.name,
                 email=user_dto.email,
             )
@@ -102,5 +101,5 @@ class UserRepository(IUserRepository):
 
         else:
             user.name = user_dto.name
-            user.role_id = user_dto.role_id
+            user.role_id = None
             user.email = user_dto.email
