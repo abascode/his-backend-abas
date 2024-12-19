@@ -83,7 +83,16 @@ def upsert_take_off_data(
     year: int = Form(...),
     calculation_uc: ICalculationUseCase = Depends(CalculationUseCase),
 ) -> NoDataResponse:
-    calculation_uc.upsert_take_off_data(request, file, month, year)
+    if (
+        file.content_type
+        != "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ):
+        raise HTTPException(
+            status_code=http.HTTPStatus.BAD_REQUEST,
+            detail="Please upload excel file",
+        )
+    path = save_file("calculations", file)
+    calculation_uc.upsert_take_off_data(request, path, month, year)
 
     return NoDataResponse(message="Success uploading take off data!")
 

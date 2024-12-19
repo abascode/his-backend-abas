@@ -102,6 +102,8 @@ class CalculationUseCase(ICalculationUseCase):
                 detail=f"{not_found_index[0]} field is required.",
             )
 
+        begin_transaction(request, Database.VEHICLE_ALLOCATION)
+
         calculation_details: List[SlotCalculationDetail] = []
         calculation_detail_map = {}
 
@@ -200,8 +202,6 @@ class CalculationUseCase(ICalculationUseCase):
             request, month=month, year=year
         )
 
-        begin_transaction(request, Database.VEHICLE_ALLOCATION)
-
         if calculation is None:
             self.calculation_repo.create_calculation(
                 request,
@@ -263,74 +263,61 @@ class CalculationUseCase(ICalculationUseCase):
         commit(request, Database.VEHICLE_ALLOCATION)
 
     def upsert_take_off_data(
-        self, request: Request, file: UploadFile, month: int, year: int
+        self, request: Request, file: str, month: int, year: int
     ) -> None:
+        if not is_file_exist(file):
+            raise HTTPException(
+                status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Excel file is not found",
+            )
+
+        df = pandas.read_excel(os.getcwd() + "/storage" + file)
+        columns = [
+            "Category",
+            "Sub Name",
+            "HMMI",
+            "HMSI",
+            "Class",
+            "Sales Name",
+            "Lot No",
+            "Suffix/KIT",
+            "Item name",
+        ]
+
+        not_found_index = [i for i in columns if i not in df.columns.tolist()]
+        forecast_months = [
+            i for i in df.columns.tolist() if re.match(r"^\d{4}-(0[1-9]|1[0-2])$", i)
+        ]
+
+        if len(not_found_index) > 0:
+            raise HTTPException(
+                http.HTTPStatus.BAD_REQUEST,
+                detail=f"{not_found_index[0]} field is required.",
+            )
 
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
 
-        slot_calculation = self.calculation_repo.find_calculation(
-            request, month=month, year=year
-        )
+        calculation_details: List[SlotCalculationDetail] = []
+        calculation_detail_map = {}
 
-        is_create = slot_calculation is None
+        model_dict: Dict[str, Model] = {}
 
-        if is_create:
-            slot_calculation = SlotCalculation()
-            slot_calculation.month = month
-            slot_calculation.year = year
+        for idx, row in df.iterrows():
+            model_id = row["Sales Name"]
 
-            slot_calculation = self.calculation_repo.create_calculation(
-                request, slot_calculation
-            )
+            if model_id not in model_dict:
+                model = self.master_repository.find_model(request, model_id)
+                if model is None:
+                    raise HTTPException(
+                        http.HTTPStatus.BAD_REQUEST,
+                        detail=f"Model {model_id} is not found",
+                    )
+                model_dict[model_id] = model
 
-        temp_storage_path = f"{os.getcwd()}/src/temp"
-        file_extension = get_file_extension(file)
-        unique_filename = f"{generate_xid()}.{file_extension}"
+            model = model_dict[model_id]
 
-        file_path = Path(temp_storage_path) / unique_filename
-
-        save_upload_file(file, file_path)
-
-        workbook = open_excel_workbook(file_path)
-        worksheet = get_worksheet(workbook=workbook)
-
-        HEADER_ROW_LOCATION = 1
-        MODEL_NAME_COLUMN_NAME = "Sales Name"
-
-        model_name_column_index = get_header_column_index(
-            worksheet, MODEL_NAME_COLUMN_NAME, HEADER_ROW_LOCATION
-        )
-
-        if model_name_column_index is None:
-            raise HTTPException(
-                status_code=http.HTTPStatus.BAD_REQUEST,
-                detail=f"Column {MODEL_NAME_COLUMN_NAME} is not found",
-            )
-        new_calculation_details: List[SlotCalculationDetail] = []
-
-        forecast_month_headers = [
-            (cell.column, cell.value)
-            for cell in worksheet[HEADER_ROW_LOCATION]
-            if is_date_string_format(cell.value, "%Y-%m")
-        ]
-
-        for row in worksheet.iter_rows(
-            min_row=HEADER_ROW_LOCATION + 1, max_row=worksheet.max_row
-        ):
-            model_name = row[model_name_column_index - 1].value
-            model_detail = self.master_repository.find_model_by_variant(
-                request, model_name
-            )
-            if model_detail is None:
-                raise HTTPException(
-                    status_code=http.HTTPStatus.NOT_FOUND,
-                    detail=f"Model {model_name} is not found",
-                )
-
-            for column_index, header_name in forecast_month_headers:
-                take_off_value = row[column_index - 1].value
-
-                forecast_month = get_month_difference(f"{year}-{month}", header_name)
+            for j in forecast_months:
+                forecast_month = get_month_difference(f"{year}-{month}", j)
 
                 if forecast_month < 0:
                     raise HTTPException(
@@ -338,36 +325,175 @@ class CalculationUseCase(ICalculationUseCase):
                         detail=f"Forecast month cannot be less than the current month",
                     )
 
-                slot_calculation_detail = SlotCalculationDetail(
-                    slot_calculation_id=slot_calculation.id,
-                    model_id=model_detail.id,
-                    forecast_month=forecast_month,
-                    take_off=take_off_value,
+                if model.id not in calculation_detail_map:
+                    calculation_detail_map[model.id] = {}
+
+                if forecast_month not in calculation_detail_map[model.id]:
+                    calculation_detail_map[model.id][forecast_month] = (
+                        SlotCalculationDetail(
+                            model_id=model.id,
+                            forecast_month=forecast_month,
+                            take_off=0,
+                        )
+                    )
+
+                calculation_detail_map[model.id][forecast_month].take_off += (
+                    row[j] if not pandas.isna(row[j]) else 0
                 )
 
-                new_calculation_details.append(slot_calculation_detail)
+        calculation = self.calculation_repo.find_calculation(
+            request, month=month, year=year
+        )
 
-        if is_create:
-            for calculation_detail in new_calculation_details:
-                self.calculation_repo.create_calculation_detail(
-                    request, calculation_detail
-                )
+        if calculation is None:
+            self.calculation_repo.create_calculation(
+                request,
+                SlotCalculation(month=month, year=year, details=calculation_details),
+            )
         else:
-            current_details = slot_calculation.details
+            detail_maps = {}
+            for i in calculation.details:
+                if i.deletable == 0:
+                    if i.model_id not in detail_maps:
+                        detail_maps[i.model_id] = {}
+                    if i.forecast_month not in detail_maps[i.model_id]:
+                        detail_maps[i.model_id][i.forecast_month] = i
 
-            for i in range(len(new_calculation_details)):
-                current_details[i].model_id = new_calculation_details[i].model_id
-                current_details[i].forecast_month = new_calculation_details[
-                    i
-                ].forecast_month
-                current_details[i].take_off = new_calculation_details[i].take_off
+            for model_id, forecast_month_map in calculation_detail_map.items():
+                if model_id in detail_maps:
+                    for (
+                        forecast_month,
+                        calculation_detail,
+                    ) in forecast_month_map.items():
+                        calculation_detail.slot_calculation_id = calculation.id
+                        if forecast_month not in detail_maps[model_id]:
+                            self.calculation_repo.create_calculation_detail(
+                                request, calculation_detail
+                            )
+                        else:
+                            detail_maps[model_id][forecast_month].model_id = (
+                                calculation_detail_map[model_id][
+                                    forecast_month
+                                ].model_id
+                            )
+                            detail_maps[model_id][forecast_month].take_off = (
+                                calculation_detail_map[model_id][
+                                    forecast_month
+                                ].take_off
+                            )
+                else:
+                    for (
+                        forecast_month,
+                        calculation_detail,
+                    ) in forecast_month_map.items():
+                        calculation_detail.slot_calculation_id = calculation.id
+                        self.calculation_repo.create_calculation_detail(
+                            request, calculation_detail
+                        )
 
-                self.calculation_repo.create_calculation_detail(
-                    request, current_details[i]
-                )
         commit(request, Database.VEHICLE_ALLOCATION)
-
-        clear_directory(Path(temp_storage_path))
+        # begin_transaction(request, Database.VEHICLE_ALLOCATION)
+        #
+        # slot_calculation = self.calculation_repo.find_calculation(
+        #     request, month=month, year=year
+        # )
+        #
+        # is_create = slot_calculation is None
+        #
+        # if is_create:
+        #     slot_calculation = SlotCalculation()
+        #     slot_calculation.month = month
+        #     slot_calculation.year = year
+        #
+        #     slot_calculation = self.calculation_repo.create_calculation(
+        #         request, slot_calculation
+        #     )
+        #
+        # temp_storage_path = f"{os.getcwd()}/src/temp"
+        # file_extension = get_file_extension(file)
+        # unique_filename = f"{generate_xid()}.{file_extension}"
+        #
+        # file_path = Path(temp_storage_path) / unique_filename
+        #
+        # save_upload_file(file, file_path)
+        #
+        # workbook = open_excel_workbook(file_path)
+        # worksheet = get_worksheet(workbook=workbook)
+        #
+        # HEADER_ROW_LOCATION = 1
+        # MODEL_NAME_COLUMN_NAME = "Sales Name"
+        #
+        # model_name_column_index = get_header_column_index(
+        #     worksheet, MODEL_NAME_COLUMN_NAME, HEADER_ROW_LOCATION
+        # )
+        #
+        # if model_name_column_index is None:
+        #     raise HTTPException(
+        #         status_code=http.HTTPStatus.BAD_REQUEST,
+        #         detail=f"Column {MODEL_NAME_COLUMN_NAME} is not found",
+        #     )
+        # new_calculation_details: List[SlotCalculationDetail] = []
+        #
+        # forecast_month_headers = [
+        #     (cell.column, cell.value)
+        #     for cell in worksheet[HEADER_ROW_LOCATION]
+        #     if is_date_string_format(cell.value, "%Y-%m")
+        # ]
+        #
+        # for row in worksheet.iter_rows(
+        #     min_row=HEADER_ROW_LOCATION + 1, max_row=worksheet.max_row
+        # ):
+        #     model_name = row[model_name_column_index - 1].value
+        #     model_detail = self.master_repository.find_model_by_variant(
+        #         request, model_name
+        #     )
+        #     if model_detail is None:
+        #         raise HTTPException(
+        #             status_code=http.HTTPStatus.NOT_FOUND,
+        #             detail=f"Model {model_name} is not found",
+        #         )
+        #
+        #     for column_index, header_name in forecast_month_headers:
+        #         take_off_value = row[column_index - 1].value
+        #
+        #         forecast_month = get_month_difference(f"{year}-{month}", header_name)
+        #
+        #         if forecast_month < 0:
+        #             raise HTTPException(
+        #                 status_code=http.HTTPStatus.BAD_REQUEST,
+        #                 detail=f"Forecast month cannot be less than the current month",
+        #             )
+        #
+        #         slot_calculation_detail = SlotCalculationDetail(
+        #             slot_calculation_id=slot_calculation.id,
+        #             model_id=model_detail.id,
+        #             forecast_month=forecast_month,
+        #             take_off=take_off_value,
+        #         )
+        #
+        #         new_calculation_details.append(slot_calculation_detail)
+        #
+        # if is_create:
+        #     for calculation_detail in new_calculation_details:
+        #         self.calculation_repo.create_calculation_detail(
+        #             request, calculation_detail
+        #         )
+        # else:
+        #     current_details = slot_calculation.details
+        #
+        #     for i in range(len(new_calculation_details)):
+        #         current_details[i].model_id = new_calculation_details[i].model_id
+        #         current_details[i].forecast_month = new_calculation_details[
+        #             i
+        #         ].forecast_month
+        #         current_details[i].take_off = new_calculation_details[i].take_off
+        #
+        #         self.calculation_repo.create_calculation_detail(
+        #             request, current_details[i]
+        #         )
+        # commit(request, Database.VEHICLE_ALLOCATION)
+        #
+        # clear_directory(Path(temp_storage_path))
 
     def get_calculation_detail(
         self, request, get_calculation_request: GetCalculationRequest

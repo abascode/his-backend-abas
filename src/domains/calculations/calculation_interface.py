@@ -17,7 +17,7 @@ from src.models.responses.calculation_response import GetCalculationResponse
 class ICalculationUseCase:
     @abc.abstractmethod
     def upsert_take_off_data(
-        self, request: Request, file: UploadFile, month: int, year: int
+        self, request: Request, file: str, month: int, year: int
     ) -> None:
         pass
 
