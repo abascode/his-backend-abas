@@ -149,6 +149,8 @@ class AllocationUseCase(IAllocationUseCase):
             if category_id not in total_alloc_map[dealer_id]:
                 total_alloc_map[dealer_id][category_id] = 0
 
+            allocation = min(allocation, ws)
+
             total_alloc_map[dealer_id][category_id] += allocation
             dealer_adjustment_map[dealer_id][model_id]["remaining_stock"] = end_stock
             dealer_adjustment_map[dealer_id][model_id][forecast_month] = (
