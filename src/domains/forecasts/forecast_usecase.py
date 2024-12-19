@@ -252,7 +252,7 @@ class ForecastUseCase(IForecastUseCase):
 
     def confirm_forecast(
         self, request: Request, confirm_request: ConfirmForecastRequest
-    ):
+    ) -> str:
         begin_transaction(request, Database.VEHICLE_ALLOCATION)
         forecast = self.forecast_repo.find_forecast(request, confirm_request.record_id)
 
@@ -306,6 +306,7 @@ class ForecastUseCase(IForecastUseCase):
                             ]["ws_priv_conf"]
 
         commit(request, Database.VEHICLE_ALLOCATION)
+        return forecast.dealer_id
 
     def archive_forecast(self, request: Request, forecast: Forecast):
         archive = ForecastArchive(
