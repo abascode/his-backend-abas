@@ -136,7 +136,7 @@ class AllocationRepository(IAllocationRepository):
                                             )
                                             + func.coalesce(SlotCalculationDetail.bo, 0)
                                         )
-                                        * StockPilot.percentage
+                                        * (cast(StockPilot.percentage, Float) / 100)
                                     )
                                     - (
                                         (
@@ -464,12 +464,3 @@ class AllocationRepository(IAllocationRepository):
             )
 
         return response.json()
-
-    def delete_monthly_target_detail(
-        self,
-        month_target_id: str,
-        forecast_month: int,
-        dealer_id: str,
-        category_id: str,
-    ):
-        pass

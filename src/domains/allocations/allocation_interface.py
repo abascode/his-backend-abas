@@ -110,14 +110,3 @@ class IAllocationRepository:
         payload: dict,
     ) -> dict:
         pass
-
-    @abc.abstractmethod
-    def delete_monthly_target_detail(
-        self,
-        request: Request,
-        month_target_id: str,
-        forecast_month: int,
-        dealer_id: str,
-        category_id: str,
-    ):
-        pass
