@@ -36,16 +36,6 @@ class GetForecastResponse(BaseModel):
     dealer: TextValueResponse
     models: List[GetForecastDetailResponse]
 
-
-class GetpdfResponse(BaseModel):
-    id: str
-    month: int
-    year: int
-    order_confirmation: str
-    dealer: TextValueResponse
-    models: List[GetForecastDetailResponse]
-
-
 class GetApprovalAllocationSuccessResponse(BaseModel):
     primary_id: str
     status: str
