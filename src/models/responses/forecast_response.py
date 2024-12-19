@@ -30,11 +30,11 @@ class GetForecastDetailResponse(BaseModel):
 
 class GetForecastResponse(BaseModel):
     id: str
+    order_confirmation_date: str
     month: int
     year: int
     dealer: TextValueResponse
     models: List[GetForecastDetailResponse]
-
 
 class GetApprovalAllocationSuccessResponse(BaseModel):
     primary_id: str
