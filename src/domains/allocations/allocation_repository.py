@@ -142,6 +142,7 @@ class AllocationRepository(IAllocationRepository):
                                         (
                                             func.coalesce(SlotCalculationDetail.soa, 0)
                                             + func.coalesce(SlotCalculationDetail.oc, 0)
+                                            + func.coalesce(SlotCalculationDetail.so, 0)
                                             + func.coalesce(
                                                 SlotCalculationDetail.booking_prospect,
                                                 0,
@@ -250,6 +251,7 @@ class AllocationRepository(IAllocationRepository):
                 SlotCalculationDetail.soa,
                 SlotCalculationDetail.oc,
                 SlotCalculationDetail.bo,
+                SlotCalculationDetail.so,
                 OrderConfiguration.forecast_percentage,
                 StockPilot.percentage,
                 ForecastDetailMonth.confirmed_total_ws,
