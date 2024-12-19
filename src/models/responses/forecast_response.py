@@ -30,8 +30,18 @@ class GetForecastDetailResponse(BaseModel):
 
 class GetForecastResponse(BaseModel):
     id: str
+    order_confirmation_date: str
     month: int
     year: int
+    dealer: TextValueResponse
+    models: List[GetForecastDetailResponse]
+
+
+class GetpdfResponse(BaseModel):
+    id: str
+    month: int
+    year: int
+    order_confirmation: str
     dealer: TextValueResponse
     models: List[GetForecastDetailResponse]
 

@@ -92,3 +92,17 @@ def confirm_forecast(
     return PdfResponse(
         message="Success confirming forecast", document_link="https://www.google.com"
     )
+
+
+@router.get(
+    "/pdf",
+    dependencies=[Depends(api_key_auth)],
+    summary="Generate Order Confirmation PDF",
+)
+def generate_forecast_pdf(
+    request: Request,
+    get_forecast_detail_request: GetForecastDetailRequest = Depends(),
+    forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
+):
+    data = forecast_uc.generate_forecast_pdf(request, get_forecast_detail_request)
+    return data

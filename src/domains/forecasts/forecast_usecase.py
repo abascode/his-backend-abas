@@ -4,7 +4,9 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import re
 from typing import List, Dict
+import requests
 
+from src.config.config import get_config
 from fastapi import Depends, HTTPException, UploadFile
 import openpyxl
 from starlette.requests import Request
@@ -50,6 +52,7 @@ from src.models.responses.forecast_response import (
     GetForecastResponse,
     GetForecastDetailResponse,
     GetForecastDetailMonthResponse,
+    GetpdfResponse,
 )
 from src.shared.enums import Database
 from src.shared.utils.database_utils import begin_transaction, commit
@@ -60,6 +63,7 @@ from src.shared.utils.file_utils import (
     get_file_extension,
     save_upload_file,
 )
+from src.shared.utils.parser import to_dict
 from src.shared.utils.xid import generate_xid
 
 
@@ -199,6 +203,12 @@ class ForecastUseCase(IForecastUseCase):
 
         models: List[GetForecastDetailResponse] = []
 
+        order_confirmation_date = (
+            data.confirmed_at.strftime("%m/%d/%Y")
+            if data.confirmed_at is not None
+            else "N/A"
+        )
+
         for i in data.details:
             months = []
 
@@ -234,6 +244,7 @@ class ForecastUseCase(IForecastUseCase):
 
         return GetForecastResponse(
             id=data.id,
+            order_confirmation_date=order_confirmation_date,
             month=data.month,
             year=data.year,
             dealer=TextValueResponse(text=data.dealer.name, value=data.dealer.id),
@@ -359,3 +370,36 @@ class ForecastUseCase(IForecastUseCase):
         self.forecast_repo.add_forecast_archive(
             request, archive, archive_details, archive_month_details
         )
+
+    def generate_forecast_pdf(
+        self, request: Request, get_pdf_request: GetForecastDetailRequest
+    ) -> str:
+        try:
+            forecast = self.get_forecast_detail(
+                request,
+                get_pdf_request,
+            )
+
+            forecast_data_dict = forecast.model_dump()
+
+            res = requests.post(
+                "{}/pdf/vehicle-allocation/oc?api_key={}".format(
+                    get_config().outbound["pdf"].base_url,
+                    get_config().outbound["pdf"].api_key,
+                ),
+                json={"data": forecast_data_dict},
+                timeout=10,
+                headers={"Content-Type": "application/json"},
+            )
+
+            if res.status_code != 200:
+                raise HTTPException(
+                    status_code=res.status_code, detail="Failed to generate pdf"
+                )
+
+            return res.text
+        except requests.exceptions.Timeout as e:
+            raise HTTPException(
+                status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Outbound Timeout: pdf/vehicle-allocation/oc",
+            )

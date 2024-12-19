@@ -58,6 +58,11 @@ class IForecastUseCase:
     ) -> None:
         pass
 
+    def generate_forecast_pdf(
+        self, request: Request, get_pdf_request: GetForecastDetailRequest
+    ) -> str:
+        pass
+
 
 class IForecastRepository:
     @abc.abstractmethod
