@@ -1,5 +1,7 @@
+import base64
 import http
 import os
+import uuid
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import re
@@ -404,7 +406,15 @@ class ForecastUseCase(IForecastUseCase):
                     status_code=res.status_code, detail="Failed to generate pdf"
                 )
 
-            return res.text
+            upload_dir = os.path.join(os.getcwd(), "storage/temp/pdfs")
+            if not os.path.exists(upload_dir):
+                os.makedirs(upload_dir)
+            file_name = upload_dir + "/" + generate_xid() + ".pdf"
+
+            with open(file_name, "wb") as f:
+                file_content = base64.b64decode(res.text)
+                f.write(file_content)
+            return file_name
         except requests.exceptions.Timeout as e:
             raise HTTPException(
                 status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR,

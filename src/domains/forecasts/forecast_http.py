@@ -1,7 +1,10 @@
+import base64
 import math
+from io import BytesIO
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from starlette.requests import Request
+from starlette.responses import FileResponse
 
 from src.dependencies.auth_dependency import api_key_auth
 from src.domains.forecasts.forecast_interface import IForecastUseCase
@@ -97,7 +100,6 @@ def confirm_forecast(
 
 @router.get(
     "/pdf",
-    dependencies=[Depends(api_key_auth)],
     summary="Generate Order Confirmation PDF",
 )
 def generate_forecast_pdf(
@@ -105,5 +107,11 @@ def generate_forecast_pdf(
     get_forecast_detail_request: GetForecastDetailRequest = Depends(),
     forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
 ):
-    data = forecast_uc.generate_forecast_pdf(request, get_forecast_detail_request)
-    return data
+    pdf_path = forecast_uc.generate_forecast_pdf(request, get_forecast_detail_request)
+
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        filename="forecast.pdf",
+        headers={"Content-Disposition": "inline; filename=forecast.pdf"},
+    )
