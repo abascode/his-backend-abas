@@ -94,7 +94,7 @@ def confirm_forecast(
 
     return PdfResponse(
         message="Success confirming forecast",
-        document_link=f"/api/forecasts/pdf?month={res.month}&year={res.year}&dealer_id={res.dealer_id}",
+        document_link=f"{request.base_url}api/forecasts/pdf?month={res.month}&year={res.year}&dealer_id={res.dealer_id}",
     )
 
 
@@ -107,6 +107,7 @@ def generate_forecast_pdf(
     get_forecast_detail_request: GetForecastDetailRequest = Depends(),
     forecast_uc: IForecastUseCase = Depends(ForecastUseCase),
 ):
+    print(request.base_url)
     pdf_path = forecast_uc.generate_forecast_pdf(request, get_forecast_detail_request)
 
     return FileResponse(
