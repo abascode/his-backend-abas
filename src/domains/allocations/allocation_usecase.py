@@ -1,4 +1,5 @@
 import http
+import json
 import os
 import re
 import uuid
@@ -461,38 +462,36 @@ class AllocationUseCase(IAllocationUseCase):
                     AllocationApprovalFlagEnum.APPROVED
                 )
 
-        unapproved_approvals = [i for i in approvals if i.approved_at is None]
-
-        if len(unapproved_approvals) == 0:
-            payload = {"data": []}
-            for forecast in forecasts:
-                for i in forecast.details:
-                    if i.deletable == 0:
-                        temp = {
-                            "RECORD_ID": i.id,
-                            "DEALER_FORECAST_ID": forecast.id,
-                            "MODEL_VARIANT": i.model_id,
-                        }
-                        for j in i.months:
-                            if j.deletable == 0:
-                                temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = (
-                                    j.hmsi_allocation
-                                )
-                        payload["data"].append(temp)
-
-            data = self.allocation_repo.approve_allocation_data(request, payload)
-            commit(request, Database.VEHICLE_ALLOCATION)
-
-            return {
-                "payload": payload,
-                "response": data,
-            }
-
         commit(request, Database.VEHICLE_ALLOCATION)
 
         return {
             "message": "Success approving allocation",
         }
+
+    def send_allocation_to_hoyu(
+        self, request: Request, approval_request: ApprovalAllocationRequest
+    ):
+        forecasts = self.forecast_repo.get_forecast(
+            request, month=approval_request.month, year=approval_request.year
+        )
+        for forecast in forecasts:
+            payload = {"data": []}
+
+            for i in forecast.details:
+                if i.deletable == 0:
+                    temp = {
+                        "RECORD_ID": i.id,
+                        "DEALER_FORECAST_ID": forecast.id,
+                        "MODEL_VARIANT": i.model_id,
+                    }
+                    for j in i.months:
+                        if j.deletable == 0:
+                            temp[f"N{j.forecast_month}_HMSI_ALLOCATION"] = (
+                                j.hmsi_allocation
+                            )
+                    payload["data"].append(temp)
+            print("Sending Allocation: " + forecast.dealer_id)
+            self.allocation_repo.approve_allocation_data(request, payload)
 
     def download_monthly_target_excel_template(
         self, request: Request, month: int, year: int

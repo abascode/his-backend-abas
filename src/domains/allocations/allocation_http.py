@@ -1,7 +1,15 @@
 import http
 import math
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    UploadFile,
+    HTTPException,
+    BackgroundTasks,
+)
 from starlette.requests import Request
 from starlette.responses import FileResponse
 
@@ -49,6 +57,17 @@ def approve_allocation(
     res = uc.approve_allocation(request, approval_request)
     return res
     return BasicResponse(data=res, message="Success approving allocation data")
+
+
+@router.post("/send-to-hoyu", response_model=NoDataResponse)
+def send_to_hoyu(
+    request: Request,
+    background_task: BackgroundTasks,
+    approval_request: ApprovalAllocationRequest,
+    uc: IAllocationUseCase = Depends(AllocationUseCase),
+):
+    background_task.add_task(uc.send_allocation_to_hoyu, request, approval_request)
+    return NoDataResponse(message="Success sending allocation data to HOYU")
 
 
 @router.post(

@@ -49,6 +49,12 @@ class IAllocationUseCase:
     ) -> str:
         pass
 
+    @abc.abstractmethod
+    def send_allocation_to_hoyu(
+        self, request: Request, approval_request: ApprovalAllocationRequest
+    ):
+        pass
+
 
 class IAllocationRepository:
     @abc.abstractmethod
